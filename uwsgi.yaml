@@ -1,0 +1,5 @@
+uwsgi:
+    socket: /run/www-sockets/elevation-api.sock
+    virtualenv: /opt/elevation/venv
+    chdir: /opt/elevation
+    wsgi-file: api.wsgi
