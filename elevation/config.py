@@ -1,4 +1,4 @@
-import os.path
+from os.path import join, dirname
 
 import yaml
 
@@ -9,6 +9,5 @@ def load_config(file_name):
     return config
 
 def default_config():
-    from os.path import *
     file_name = join(dirname(__file__), "default_config.yaml")
     return load_config(file_name)

@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+from __future__ import print_function
 
 import sys
 from os.path import abspath, split, join
@@ -11,9 +13,8 @@ if len(sys.argv) == 2:
 elif len(sys.argv) <= 1:
     cfg = config.default_config()
 else:
-    print "usage: download-elevation-data [CONFIG_FILE]"
+    print("usage:", sys.argv[0], "[CONFIG_FILE]", file=sys.stderr)
     sys.exit(2)
 
-print "Using configuration file {0}.".format(filename)
 downloader = Downloader(cfg)
 downloader.run()

@@ -1,8 +1,16 @@
+from __future__ import print_function
+
 import os
 import sys
 import re
-import urllib
 import zipfile
+
+try:
+    # Python3
+    from urllib.request import urlopen, urlretrieve
+except ImportError:
+    # Python2
+    from urllib import urlopen, urlretrieve
 
 class Downloader:
     def __init__(self, config):
@@ -24,16 +32,18 @@ class Downloader:
         for pack in packs:
             count += 1
             self._extract_pack(self._download_pack(pack))
-            print "(%i/%i) \"%s\" downloaded and extracted" % (count, total, pack)
+            print("(%i/%i) \"%s\" downloaded and extracted"
+                        % (count, total, pack),
+                  file=sys.stderr)
 
     def retrieve_file_list(self):
-        page = urllib.urlopen(self.url).read()
+        page = urlopen(self.url).read().decode('ascii')
         urls = set(re.findall(self.regex, page))
         return urls
 
     def _download_pack(self, url):
         filename = os.path.join(self.folder, url.split('/')[-1])
-        urllib.urlretrieve(url, filename)
+        urlretrieve(url, filename)
         return filename
 
     def _extract_pack(self, path, delete=True):
@@ -47,7 +57,7 @@ class Downloader:
             first = True
             while filename in os.listdir(self.folder): 
                 if first:
-                    print "Duplicate HGT found: %s" % filename
+                    print("Duplicate HGT found: %s" % filename, file=sys.stderr)
                     first = False
                 filename += ".copy"
             output_path = os.path.join(self.folder, filename)
