@@ -1,6 +1,6 @@
 dataset:
     url: http://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm
     regex: http://www.viewfinderpanoramas.org/(?:dem3|ANTDEM3)/(?:\w|-)+\.zip
-    folder: ./data/
+    folder: /opt/elevation
     filename_format: "{:s}{:0>2.0f}{:s}{:0>3.0f}.hgt"
     cell_size: 1201

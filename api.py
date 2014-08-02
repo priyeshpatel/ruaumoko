@@ -1,10 +1,17 @@
 import os
 from flask import Flask, abort, jsonify
 
-from elevation import Elevation, NoDataError
+from elevation import config, Elevation, NoDataError
 
 app = Flask(__name__)
-elevation = Elevation(os.environ['ELEVATION_CONFIG_YAML'])
+
+cfg_file = os.environ.get('ELEVATION_CONFIG_YAML')
+if cfg_file:
+    cfg = config.load_config(cfg_file)
+else:
+    cfg = config.default_config()
+
+elevation = Elevation(cfg)
 
 @app.route('/<latitude>,<longitude>')
 def main(latitude, longitude):

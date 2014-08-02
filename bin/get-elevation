@@ -4,14 +4,14 @@ import sys
 from os.path import abspath, split, join
 sys.path.append(join(split(abspath(__file__))[0], '..'))
 
-from elevation import Elevation
+from elevation import config, Elevation
 
 if len(sys.argv) == 3:
-    filename = './elevation.yaml'
+    cfg = config.default_config()
     latitude = sys.argv[1]
     longitude = sys.argv[2]
 elif len(sys.argv) == 4:
-    filename = sys.argv[1]
+    cfg = config.load_config(sys.argv[1])
     latitude = sys.argv[2]
     longitude = sys.argv[3]
 else:
@@ -25,6 +25,5 @@ except ValueError as e:
     print e
     sys.exit(2)
 
-print "Using configuration file {0}.".format(filename)
-elevation = Elevation(filename)
-print elevation.lookup(latitude, longitude)
+elevation = Elevation(cfg)
+print(elevation.lookup(latitude, longitude), file=sys.stderr)

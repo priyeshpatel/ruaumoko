@@ -2,15 +2,11 @@ import math
 import os
 import struct
 
-from .config import load_config
-
 class NoDataError(Exception):
     pass
 
 class Elevation():
-    def __init__(self, config_file):
-        config = load_config(config_file)
-
+    def __init__(self, config):
         for attribute in ['folder', 'filename_format', 'cell_size']:
             setattr(self, attribute, config['dataset'][attribute])
 

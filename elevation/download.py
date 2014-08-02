@@ -4,12 +4,8 @@ import re
 import urllib
 import zipfile
 
-from .config import load_config
-
 class Downloader:
-    def __init__(self, config_file):
-        config = load_config(config_file)
-
+    def __init__(self, config):
         for attribute in ['url', 'regex', 'folder']:
             setattr(self, attribute, config['dataset'][attribute])
 
