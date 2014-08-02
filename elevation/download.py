@@ -18,10 +18,12 @@ class Downloader:
             setattr(self, attribute, config['dataset'][attribute])
 
     def run(self):
-        if os.path.exists(self.folder):
-            print "Output folder already exists!"
+        if not os.path.exists(self.folder):
+            os.makedirs(self.folder)
+        elif os.listdir(self.folder):
+            print("Output folder already exists, and is non empty!",
+                  file=sys.stderr)
             sys.exit(1)
-        os.makedirs(self.folder)
 
         self.download_packs()
 
