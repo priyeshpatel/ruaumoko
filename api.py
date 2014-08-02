@@ -1,12 +1,10 @@
-from flask import Flask, abort, jsonify
-import math
 import os
-import struct
+from flask import Flask, abort, jsonify
 
-from config import *
-from elevation import *
+from elevation import Elevation, NoDataError
 
 app = Flask(__name__)
+elevation = Elevation(os.environ['ELEVATION_CONFIG_YAML'])
 
 @app.route('/<latitude>,<longitude>')
 def main(latitude, longitude):
@@ -17,7 +15,7 @@ def main(latitude, longitude):
         abort(400)
 
     try:
-        return jsonify(elevation(latitude, longitude))
+        return jsonify(elevation.lookup(latitude, longitude))
     except NoDataError:
         return "No data", 404
 

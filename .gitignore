@@ -1,6 +1,5 @@
+venv/
 data/
 *.swp
 *.pyc
-api.wsgi
 uwsgi.yaml
-venv/
