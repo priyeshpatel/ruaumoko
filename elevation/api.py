@@ -1,9 +1,10 @@
 import os
 from flask import Flask, abort, jsonify, g
 
-from elevation import config, Elevation, NoDataError
+from . import config, Dataset
 
 app = Flask(__name__)
+
 
 @app.before_first_request
 def load_config():
@@ -13,7 +14,8 @@ def load_config():
     else:
         cfg = config.default_config()
 
-    g['elevation'] = Elevation(cfg)
+    global elevation
+    elevation = Dataset(cfg['dataset']['filename'])
 
 @app.route('/<latitude>,<longitude>')
 def main(latitude, longitude):
@@ -23,7 +25,4 @@ def main(latitude, longitude):
     except ValueError:
         abort(400)
 
-    try:
-        return jsonify(g['elevation'].lookup(latitude, longitude))
-    except NoDataError:
-        return "No data", 404
+    return jsonify({"elevation": elevation.get(latitude, longitude)})

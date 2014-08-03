@@ -3,3 +3,6 @@ data/
 *.swp
 *.pyc
 uwsgi.yaml
+elevation/dataset.c
+*.so
+build/
