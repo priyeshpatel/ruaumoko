@@ -14,7 +14,8 @@ try:
     from urllib.parse import urlparse
 except ImportError:
     # Python2
-    from urllib import urlopen, urlretrieve, urlparse
+    from urllib import urlopen, urlretrieve
+    from urlparse import urlparse
 
 
 from . import dataset
@@ -31,7 +32,7 @@ class Downloader:
             sys.exit(1)
 
         ds = dataset.DatasetWriter(self.filename)
-        packs = self._retrieve_file_list()
+        packs = sorted(self._retrieve_file_list())
 
         hgt_count = 0
 
@@ -40,8 +41,11 @@ class Downloader:
             pack_name = os.path.basename(pack_path)
 
             with tempfile.TemporaryFile() as f:
-                with urlopen(pack) as u:
+                u = urlopen(pack)
+                try:
                     shutil.copyfileobj(u, f)
+                finally:
+                    u.close()
                 f.seek(0, 2)
 
                 with zipfile.ZipFile(f, 'r') as pack:
