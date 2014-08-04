@@ -1,4 +1,5 @@
-# Elevation API for Tawhiri
+# Ruaumoko: Elevation API for Tawhiri
+
 A Python module and web API for worldwide elevation data.
 
 This project is a part of the larger [Tawhiri Landing Predictor

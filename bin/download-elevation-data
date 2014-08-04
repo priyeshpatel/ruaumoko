@@ -6,7 +6,7 @@ import sys
 from os.path import abspath, split, join
 sys.path.append(join(split(abspath(__file__))[0], '..'))
 
-from elevation import config, Downloader
+from ruaumoko import config, Downloader
 
 if len(sys.argv) == 2:
     cfg = config.load_config(sys.argv[1])

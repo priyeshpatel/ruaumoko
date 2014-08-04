@@ -8,7 +8,7 @@ except (IOError, ImportError):
     long_description = ''
 
 def get_version():
-    with open("elevation/__init__.py") as f:
+    with open("ruaumoko/__init__.py") as f:
         for line in f:
             if line.startswith("__version__"):
                 return line[15:-2]
@@ -19,13 +19,13 @@ setup(
     version=get_version(),
     author='Cambridge University Spaceflight',
     author_email='contact@cusf.co.uk',
-    packages=['elevation'],
+    packages=['ruaumoko'],
     entry_points={
         "console_scripts": [
             # TODO "tawhiri-download = tawhiri.downloader:main"
         ]
     },
-    ext_modules = cythonize("elevation/*.pyx"),
+    ext_modules = cythonize("ruaumoko/*.pyx"),
     url='http://www.cusf.co.uk/wiki/tawhiri:start',
     license='GPLv3+',
     description='Ground Elevation',

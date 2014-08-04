@@ -6,7 +6,7 @@ import sys
 from os.path import abspath, split, join
 sys.path.append(join(split(abspath(__file__))[0], '..'))
 
-from elevation import config, Elevation
+from ruaumoko import config, Dataset
 
 if len(sys.argv) == 3:
     cfg = config.default_config()
@@ -27,5 +27,5 @@ except ValueError as e:
     print(e)
     sys.exit(2)
 
-elevation = Elevation(cfg)
+elevation = Dataset(cfg['dataset']['filename'])
 print(elevation.lookup(latitude, longitude), file=sys.stderr)
