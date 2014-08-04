@@ -1,1 +1,1 @@
-from api import app as application
+from ruaumoko.api import app as application
