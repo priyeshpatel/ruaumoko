@@ -1,30 +1,31 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 from os.path import abspath, split, join
 sys.path.append(join(split(abspath(__file__))[0], '..'))
 
-from elevation import Elevation
+from elevation import config, Elevation
 
 if len(sys.argv) == 3:
-    filename = './elevation.yaml'
+    cfg = config.default_config()
     latitude = sys.argv[1]
     longitude = sys.argv[2]
 elif len(sys.argv) == 4:
-    filename = sys.argv[1]
+    cfg = config.load_config(sys.argv[1])
     latitude = sys.argv[2]
     longitude = sys.argv[3]
 else:
-    print "usage: get-elevation [CONFIG_FILE] LATITUDE LONGITUDE"
+    print("usage:", sys.argv[0], "[CONFIG_FILE] LATITUDE LONGITUDE", file=sys.stderr)
     sys.exit(2)
 
 try:
     latitude = float(latitude)
     longitude = float(longitude)
 except ValueError as e:
-    print e
+    print(e)
     sys.exit(2)
 
-print "Using configuration file {0}.".format(filename)
-elevation = Elevation(filename)
-print elevation.lookup(latitude, longitude)
+elevation = Elevation(cfg)
+print(elevation.lookup(latitude, longitude), file=sys.stderr)
