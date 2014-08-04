@@ -15,7 +15,7 @@ def get_version():
     raise Exception("Could not find version number")
 
 setup(
-    name="Elevation", # TODO
+    name="Ruaumoko",
     version=get_version(),
     author='Cambridge University Spaceflight',
     author_email='contact@cusf.co.uk',
