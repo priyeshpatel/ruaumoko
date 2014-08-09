@@ -62,12 +62,10 @@ cdef class Dataset:
     cdef short get_cell(self, int row, int col):
         cdef int block_r, block_c
 
-        print("Get", row, col)
         block_r = row / block_rows
         row %= block_rows
         block_c = col / block_cols
         col %= block_cols
-        print("Get", block_r, block_c, row, col)
 
         return self.data[block_r, block_c, row, col]
 
