@@ -21,20 +21,17 @@ from __future__ import print_function
 
 import sys
 from os.path import abspath, split, join
-sys.path.append(join(split(abspath(__file__))[0], '..'))
+sys.path.insert(0, join(split(abspath(__file__))[0], '..'))
 
-from ruaumoko import config, Dataset
+from ruaumoko import Dataset
 
 if len(sys.argv) == 3:
-    cfg = config.default_config()
-    latitude = sys.argv[1]
-    longitude = sys.argv[2]
+    filename = "/opt/elevation"
+    _, latitude, longitude = sys.argv
 elif len(sys.argv) == 4:
-    cfg = config.load_config(sys.argv[1])
-    latitude = sys.argv[2]
-    longitude = sys.argv[3]
+    _, filename, latitude, longitude = sys.argv
 else:
-    print("usage:", sys.argv[0], "[CONFIG_FILE] LATITUDE LONGITUDE", file=sys.stderr)
+    print("usage:", sys.argv[0], "[/opt/elevation] LATITUDE LONGITUDE", file=sys.stderr)
     sys.exit(2)
 
 try:
@@ -44,5 +41,5 @@ except ValueError as e:
     print(e)
     sys.exit(2)
 
-elevation = Dataset(cfg['dataset']['filename'])
-print(elevation.get(latitude, longitude), file=sys.stderr)
+elevation = Dataset(filename)
+print(elevation.get(latitude, longitude))

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Copyright 2014 (C) Priyesh Patel, Daniel Richman
+
+# Copyright 2014 (C) Daniel Richman
 #
 # This file is part of Ruaumoko. 
 # https://github.com/cuspaceflight/ruaumoko
@@ -17,22 +18,63 @@
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
 
-
-from __future__ import print_function
-
 import sys
-from os.path import abspath, split, join
-sys.path.append(join(split(abspath(__file__))[0], '..'))
+import os
+import shutil
+import tempfile
+import zipfile
 
-from ruaumoko import config, Downloader
+from os import path
 
-if len(sys.argv) == 2:
-    cfg = config.load_config(sys.argv[1])
-elif len(sys.argv) <= 1:
-    cfg = config.default_config()
-else:
-    print("usage:", sys.argv[0], "[CONFIG_FILE]", file=sys.stderr)
-    sys.exit(2)
+from sh import wget, convert, unzip
 
-downloader = Downloader(cfg)
-downloader.run()
+URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
+TIF_FORMAT = "15-{}.tif"
+EXPECT_SIZE = 14401 * 10801 * 2
+
+def char_range(frm, to):
+    # inclusive endpoints
+    return map(chr, range(ord(frm), ord(to) + 1))
+
+CHUNKS = list(char_range('A', 'X'))
+
+def main(target, temp_dir):
+    zip_path = path.join(temp_dir, "temp.zip")
+    tgt_path = path.join(temp_dir, "chunk")
+
+    for chunk in CHUNKS:
+        tif_name = TIF_FORMAT.format(chunk)
+        tif_path = path.join(temp_dir, tif_name)
+
+        wget(URL_FORMAT.format(chunk), q=True, O=zip_path)
+        
+        with zipfile.ZipFile(zip_path, 'r') as pack:
+            contents = pack.namelist()
+            if contents != [tif_name]:
+                raise ValueError("Bad archive contents: {:r}".format(contents))
+        
+        unzip(zip_path, d=temp_dir)
+        os.unlink(zip_path)
+
+        convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
+        os.unlink(tif_path)
+
+        if os.stat(tgt_path).st_size != EXPECT_SIZE:
+            raise ValueError("Bad converted size: {}".format(chunk))
+
+        with open(tgt_path, "rb") as f:
+            shutil.copyfileobj(f, target)
+        os.unlink(tgt_path)
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        target = "/opt/elevation"
+    elif len(sys.argv) == 2:
+        target = sys.argv[1]
+    else:
+        print("Usage: {} [/opt/elevation]".format(sys.argv[0]))
+        sys.exit(1)
+
+    with open(target, "wb") as target_f:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            main(target_f, temp_dir)
