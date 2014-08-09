@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
 
-# cython: gdb=True
 # cython: language_level=3
 # cython: boundscheck=False
 # cython: wraparound=False
