@@ -23,4 +23,3 @@ __version_info__ = tuple([int(d) for d in __version__.split(".")])
 __licence__ = "GPL v3"
 
 from .dataset import Dataset
-from .download import Downloader
