@@ -24,12 +24,14 @@ from . import Dataset
 
 def main():
     if len(sys.argv) == 3:
-        filename = "/opt/elevation"
+        filename = Dataset.default_location
         _, latitude, longitude = sys.argv
     elif len(sys.argv) == 4:
         _, filename, latitude, longitude = sys.argv
     else:
-        print("usage:", sys.argv[0], "[/opt/elevation] LATITUDE LONGITUDE", file=sys.stderr)
+        print("usage: {} [{}] LATITUDE LONGITUDE"
+                .format(sys.argv[0], Dataset.default_location),
+              file=sys.stderr)
         sys.exit(2)
 
     try:

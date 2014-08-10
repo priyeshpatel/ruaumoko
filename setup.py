@@ -40,8 +40,8 @@ setup(
     packages=['ruaumoko'],
     entry_points={
         "console_scripts": [
-            "ruaumoko-api = ruaumoko.api:main"
-            "ruaumoko-download = ruaumoko.download:main"
+            "ruaumoko-api = ruaumoko.api:main",
+            "ruaumoko-download = ruaumoko.download:main",
             "ruaumoko-get = ruaumoko.get_cmd:main"
         ]
     },

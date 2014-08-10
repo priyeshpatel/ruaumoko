@@ -28,9 +28,9 @@ app = Flask(__name__)
 
 @app.before_first_request
 def open_dataset():
-    dir = app.config.get('ELEVATION_DIRECTORY', '/opt/elevation')
-
     global elevation
+
+    dir = app.config.get('ELEVATION_DIRECTORY', Dataset.default_location)
     elevation = Dataset(dir)
 
 @app.route('/<latitude>,<longitude>')
@@ -46,7 +46,7 @@ def get_elevation(latitude, longitude):
 def main():
     if sys.argv[1:] == ["--debug"]:
         app.run(debug=True)
-    elif sys.arg[1:] == []:
+    elif sys.argv[1:] == []:
         app.run()
     else:
         print("Usage: {} [--debug]".format(sys.argv[0]), file=sys.stderr)

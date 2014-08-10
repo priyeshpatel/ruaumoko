@@ -28,6 +28,8 @@ from os import path
 
 from sh import wget, convert, unzip
 
+from . import Dataset
+
 URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
 TIF_FORMAT = "15-{}.tif"
 EXPECT_SIZE = 14401 * 10801 * 2
@@ -68,11 +70,11 @@ def download(target, temp_dir):
 
 def main():
     if len(sys.argv) == 1:
-        target = "/opt/elevation"
+        target = Dataset.default_location
     elif len(sys.argv) == 2:
         target = sys.argv[1]
     else:
-        print("Usage: {} [/opt/elevation]".format(sys.argv[0]))
+        print("Usage: {} [{}]".format(sys.argv[0], Dataset.default_location))
         sys.exit(1)
 
     with open(target, "wb") as target_f:
