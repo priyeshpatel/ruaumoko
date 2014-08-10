@@ -49,7 +49,7 @@ setup(
     description='Ground Elevation API',
     long_description=long_description,
     install_requires=[
-        "Cython==0.20.1",
+        "Cython",
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
