@@ -19,6 +19,12 @@ See AUTHORS.
 Ruaumoko is Copyright 2014 (see AUTHORS & individual files) and licensed under
 the [GNU GPL 3](http://gplv3.fsf.org/) (see LICENSE).
 
+## Dependencies
+
+Python dependences may be found in `requirements.txt`. To run the downloader
+you will also require the `unzip` command (from the Debian package of the same
+name) and `convert` (from `imagemagick`).
+
 ## Dataset Format
 
 Throughout Ruaumoko, data is indexed latitude-first/row-first
