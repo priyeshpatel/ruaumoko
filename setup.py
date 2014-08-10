@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from setuptools import setup
 from Cython.Build import cythonize
 
@@ -32,19 +34,22 @@ def get_version():
                 return line[15:-2]
     raise Exception("Could not find version number")
 
+console_scripts = [
+    "ruaumoko-api = ruaumoko.api:main",
+    "ruaumoko-get = ruaumoko.get_cmd:main"
+]
+
+PY2 = sys.version_info[0] == 2
+if not PY2:
+    console_scripts.append("ruaumoko-download = ruaumoko.download:main")
+
 setup(
     name="Ruaumoko",
     version=get_version(),
     author='Cambridge University Spaceflight',
     author_email='contact@cusf.co.uk',
     packages=['ruaumoko'],
-    entry_points={
-        "console_scripts": [
-            "ruaumoko-api = ruaumoko.api:main",
-            "ruaumoko-download = ruaumoko.download:main",
-            "ruaumoko-get = ruaumoko.get_cmd:main"
-        ]
-    },
+    entry_points={"console_scripts": console_scripts},
     ext_modules = cythonize("ruaumoko/*.pyx"),
     url='http://www.cusf.co.uk/wiki/ruaumoko',
     license='GPLv3+',
