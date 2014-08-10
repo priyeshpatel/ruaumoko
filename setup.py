@@ -50,6 +50,11 @@ setup(
     license='GPLv3+',
     description='Ground Elevation API',
     long_description=long_description,
+    install_requires=[
+        "Flask",
+        "magicmemoryview",
+        "sh"
+    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
