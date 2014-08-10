@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2014 (C) Daniel Richman
 #
 # This file is part of Ruaumoko. 
@@ -17,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import print_function
 
 import sys
 import os
@@ -38,7 +38,7 @@ def char_range(frm, to):
 
 CHUNKS = list(char_range('A', 'X'))
 
-def main(target, temp_dir):
+def download(target, temp_dir):
     zip_path = path.join(temp_dir, "temp.zip")
     tgt_path = path.join(temp_dir, "chunk")
 
@@ -66,7 +66,7 @@ def main(target, temp_dir):
             shutil.copyfileobj(f, target)
         os.unlink(tgt_path)
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) == 1:
         target = "/opt/elevation"
     elif len(sys.argv) == 2:
@@ -77,4 +77,7 @@ if __name__ == "__main__":
 
     with open(target, "wb") as target_f:
         with tempfile.TemporaryDirectory() as temp_dir:
-            main(target_f, temp_dir)
+            download(target_f, temp_dir)
+
+if __name__ == "__main__":
+    main()
