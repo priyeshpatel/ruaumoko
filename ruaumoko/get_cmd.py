@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright 2014 (C) Priyesh Patel, Daniel Richman
 #
 # This file is part of Ruaumoko. 
@@ -20,26 +19,30 @@
 from __future__ import print_function
 
 import sys
-from os.path import abspath, split, join
-sys.path.insert(0, join(split(abspath(__file__))[0], '..'))
 
-from ruaumoko import Dataset
+from . import Dataset
 
-if len(sys.argv) == 3:
-    filename = "/opt/elevation"
-    _, latitude, longitude = sys.argv
-elif len(sys.argv) == 4:
-    _, filename, latitude, longitude = sys.argv
-else:
-    print("usage:", sys.argv[0], "[/opt/elevation] LATITUDE LONGITUDE", file=sys.stderr)
-    sys.exit(2)
+def main():
+    if len(sys.argv) == 3:
+        filename = Dataset.default_location
+        _, latitude, longitude = sys.argv
+    elif len(sys.argv) == 4:
+        _, filename, latitude, longitude = sys.argv
+    else:
+        print("usage: {} [{}] LATITUDE LONGITUDE"
+                .format(sys.argv[0], Dataset.default_location),
+              file=sys.stderr)
+        sys.exit(2)
 
-try:
-    latitude = float(latitude)
-    longitude = float(longitude)
-except ValueError as e:
-    print(e)
-    sys.exit(2)
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except ValueError as e:
+        print(e)
+        sys.exit(2)
 
-elevation = Dataset(filename)
-print(elevation.get(latitude, longitude))
+    elevation = Dataset(filename)
+    print(elevation.get(latitude, longitude))
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,11 @@
+# API
 Flask
-PyYAML
+
+# Installation
 Cython
-MagicMemoryView
+
+# Core
+magicmemoryview
+
+# Downloader
 sh

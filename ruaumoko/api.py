@@ -16,22 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
+import sys
 import os
 from flask import Flask, abort, jsonify, g
 
-from . import config, Dataset
+from . import Dataset
 
 app = Flask(__name__)
 
 @app.before_first_request
 def open_dataset():
-    dir = app.config.get('ELEVATION_DIRECTORY', '/opt/elevation')
-
     global elevation
+
+    dir = app.config.get('ELEVATION_DIRECTORY', Dataset.default_location)
     elevation = Dataset(dir)
 
 @app.route('/<latitude>,<longitude>')
-def main(latitude, longitude):
+def get_elevation(latitude, longitude):
     try:
         latitude = float(latitude)
         longitude = float(longitude)
@@ -39,3 +42,15 @@ def main(latitude, longitude):
         abort(400)
 
     return jsonify({"elevation": elevation.get(latitude, longitude)})
+
+def main():
+    if sys.argv[1:] == ["--debug"]:
+        app.run(debug=True)
+    elif sys.argv[1:] == []:
+        app.run()
+    else:
+        print("Usage: {} [--debug]".format(sys.argv[0]), file=sys.stderr)
+        sys.exit(2)
+
+if __name__ == "__main__":
+    main()

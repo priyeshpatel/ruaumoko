@@ -40,7 +40,9 @@ setup(
     packages=['ruaumoko'],
     entry_points={
         "console_scripts": [
-            # TODO "tawhiri-download = tawhiri.downloader:main"
+            "ruaumoko-api = ruaumoko.api:main",
+            "ruaumoko-download = ruaumoko.download:main",
+            "ruaumoko-get = ruaumoko.get_cmd:main"
         ]
     },
     ext_modules = cythonize("ruaumoko/*.pyx"),
@@ -48,9 +50,6 @@ setup(
     license='GPLv3+',
     description='Ground Elevation API',
     long_description=long_description,
-    install_requires=[
-        "Cython==0.20.1",
-    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',

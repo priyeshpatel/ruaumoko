@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2014 (C) Daniel Richman
 #
 # This file is part of Ruaumoko. 
@@ -18,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import sys
 import os
 import shutil
@@ -27,6 +27,8 @@ import zipfile
 from os import path
 
 from sh import wget, convert, unzip
+
+from . import Dataset
 
 URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
 TIF_FORMAT = "15-{}.tif"
@@ -38,7 +40,7 @@ def char_range(frm, to):
 
 CHUNKS = list(char_range('A', 'X'))
 
-def main(target, temp_dir):
+def download(target, temp_dir):
     zip_path = path.join(temp_dir, "temp.zip")
     tgt_path = path.join(temp_dir, "chunk")
 
@@ -66,15 +68,18 @@ def main(target, temp_dir):
             shutil.copyfileobj(f, target)
         os.unlink(tgt_path)
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) == 1:
-        target = "/opt/elevation"
+        target = Dataset.default_location
     elif len(sys.argv) == 2:
         target = sys.argv[1]
     else:
-        print("Usage: {} [/opt/elevation]".format(sys.argv[0]))
+        print("Usage: {} [{}]".format(sys.argv[0], Dataset.default_location))
         sys.exit(1)
 
     with open(target, "wb") as target_f:
         with tempfile.TemporaryDirectory() as temp_dir:
-            main(target_f, temp_dir)
+            download(target_f, temp_dir)
+
+if __name__ == "__main__":
+    main()

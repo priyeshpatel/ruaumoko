@@ -1,5 +1,5 @@
 uwsgi:
-    socket: /run/www-sockets/elevation-api.sock
-    virtualenv: /opt/elevation/venv
-    chdir: /opt/elevation
+    socket: /run/www-sockets/ruaumoko-api.sock
+    virtualenv: /srv/ruaumoko3
+    chdir: /srv/ruaumoko3
     wsgi-file: api.wsgi

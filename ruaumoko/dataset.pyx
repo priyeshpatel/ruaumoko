@@ -51,7 +51,9 @@ shape = (4, 6, 10801, 14401)
 cdef class Dataset:
     cdef short[:, :, :, :] data
 
-    def __init__(self, filename="/opt/elevation"):
+    default_location = "/srv/ruaumoko-dataset"
+
+    def __init__(self, filename=default_location):
         prot = mmap.PROT_READ
         flags = mmap.MAP_SHARED
 
