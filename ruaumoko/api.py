@@ -1,6 +1,6 @@
 # Copyright 2014 (C) Priyesh Patel, Daniel Richman
 #
-# This file is part of Ruaumoko. 
+# This file is part of Ruaumoko.
 # https://github.com/cuspaceflight/ruaumoko
 #
 # Ruaumoko is free software: you can redistribute it and/or modify
@@ -19,12 +19,12 @@
 from __future__ import print_function
 
 import sys
-import os
-from flask import Flask, abort, jsonify, g
+from flask import Flask, abort, jsonify
 
 from . import Dataset
 
 app = Flask(__name__)
+
 
 @app.before_first_request
 def open_dataset():
@@ -33,15 +33,18 @@ def open_dataset():
     dir = app.config.get('ELEVATION_DIRECTORY', Dataset.default_location)
     elevation = Dataset(dir)
 
+
 @app.route('/<latitude>,<longitude>')
 def get_elevation(latitude, longitude):
     try:
         latitude = float(latitude)
         longitude = float(longitude)
+        result = elevation.get(latitude, longitude)
     except ValueError:
         abort(400)
 
-    return jsonify({"elevation": elevation.get(latitude, longitude)})
+    return jsonify({"elevation": result})
+
 
 def main():
     if sys.argv[1:] == ["--debug"]:
@@ -51,6 +54,7 @@ def main():
     else:
         print("Usage: {} [--debug]".format(sys.argv[0]), file=sys.stderr)
         sys.exit(2)
+
 
 if __name__ == "__main__":
     main()
