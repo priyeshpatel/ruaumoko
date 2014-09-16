@@ -19,7 +19,17 @@
 import sys
 
 from setuptools import setup
-from Cython.Build import cythonize
+
+try:
+     from Cython.Build import cythonize
+     cython_present = True
+except ImportError:
+     cython_present = False
+
+if cython_present:
+    ext_modules = cythonize("ruaumoko/dataset.pyx")
+else:
+    ext_modules = [Extension('ruaumoko.dataset', ['ruaumoko/dataset.c'])]
 
 try:
     import pypandoc
@@ -50,7 +60,7 @@ setup(
     author_email='contact@cusf.co.uk',
     packages=['ruaumoko'],
     entry_points={"console_scripts": console_scripts},
-    ext_modules = cythonize("ruaumoko/*.pyx"),
+    ext_modules=ext_modules,
     url='http://www.cusf.co.uk/wiki/ruaumoko',
     license='GPLv3+',
     description='Ground Elevation API',
