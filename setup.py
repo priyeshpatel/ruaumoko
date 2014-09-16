@@ -18,7 +18,7 @@
 
 import sys
 
-from setuptools import setup
+from setuptools import setup, Extension
 
 try:
      from Cython.Build import cythonize
