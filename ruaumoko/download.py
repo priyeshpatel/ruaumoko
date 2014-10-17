@@ -62,11 +62,9 @@ import zipfile
 
 from docopt import docopt
 from sh import wget, convert, unzip
-from six import iteritems
-from six.moves.urllib.parse import urlunsplit
 
 from . import Dataset
-from ._compat import TemporaryDirectory
+from ._compat import TemporaryDirectory, urlunsplit
 
 # HACK: interpolate dataset default location into docopt string.
 __doc__ = __doc__.format(

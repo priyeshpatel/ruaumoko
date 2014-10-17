@@ -22,6 +22,11 @@ Python 2/3 compatibility shims.
 from __future__ import print_function
 
 try:
+    from urllib.parse import urlunsplit # py 3
+except ImportError:
+    from urlparse import urlunsplit # py 2
+
+try:
     from tempfile import TemporaryDirectory
 except ImportError:
     # Taken from:

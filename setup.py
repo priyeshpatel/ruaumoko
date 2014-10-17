@@ -66,8 +66,7 @@ setup(
         "docopt",
         "Flask",
         "magicmemoryview",
-        "sh",
-        "six"
+        "sh"
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
