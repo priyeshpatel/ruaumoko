@@ -20,8 +20,8 @@ Download Digital Elevation Map (DEM) data for the Ruaumoko server.
 
 Usage:
     ruaumoko-download (-h | --help)
-    ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--path PATH]
-        [--chunks CHUNKS] [<dataset-location>]
+    ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--chunks CHUNKS]
+        [<dataset-location>]
 
 Options:
     -h, --help                      Print a brief usage summary.
@@ -33,8 +33,6 @@ Options:
 Advanced options:
     --host HOSTNAME                 Host name of DEM server.
                                     [default: www.viewfinderpanoramas.org]
-    --path PATH                     Path to DEM TIF files on server.
-                                    [default: DEM/TIF15]
     --chunks CHUNKS                 Download only specific chunks from the
                                     server. See below.
 
@@ -70,6 +68,7 @@ LOG = logging.getLogger(os.path.basename(sys.argv[0]))
 # Filename patterns
 TIFF_PATTERN = '15-<CHUNK>.tif'
 ZIP_PATTERN = '15-<CHUNK>.zip'
+DEM_PATH = 'DEM/TIF15'
 
 EXPECT_SIZE = 14401 * 10801 * 2
 
@@ -86,7 +85,7 @@ def expand_pattern(pattern, **kwargs):
         pattern = pattern.replace('<'+k+'>', v)
     return pattern
 
-def download(target, temp_dir, host, path,
+def download(target, temp_dir, host, path=DEM_PATH,
         zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None):
     zip_path = os.path.join(temp_dir, "temp.zip")
     tgt_path = os.path.join(temp_dir, "chunk")
@@ -138,7 +137,7 @@ def main():
         with TemporaryDirectory() as temp_dir:
             download(
                 target_f, temp_dir,
-                host = opts['--host'], path = opts['--path'],
+                host = opts['--host'],
                 chunks = opts['--chunks'],
             )
 
