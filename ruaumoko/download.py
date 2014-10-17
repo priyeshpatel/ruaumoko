@@ -20,14 +20,28 @@ Download Digital Elevation Map (DEM) data for the Ruaumoko server.
 
 Usage:
     ruaumoko-download (-h | --help)
-    ruaumoko-download [options] [<dataset-location>]
+    ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--path PATH]
+        [--tiff-file-pattern PATTERN] [--zip-file-pattern PATTERN]
+        [<dataset-location>]
 
 Options:
-    -h, --help          Print a brief usage summary.
-    -v, --verbose       Be verbose in logging progress.
+    -h, --help                      Print a brief usage summary.
+    -v, --verbose                   Be verbose in logging progress.
 
-    <dataset-location>  Location to store DEM dataset.
-                        [default: {default_location}]
+    <dataset-location>              Location to store DEM dataset.
+                                    [default: {default_location}]
+
+Advanced options:
+    --host HOSTNAME                 Host name of DEM server.
+                                    [default: www.viewfinderpanoramas.org]
+    --path PATH                     Path to DEM TIF files on server.
+                                    [default: DEM/TIF15]
+    --zip-file-pattern PATTERN      Pattern for zip file to fetch from server.
+                                    [default: 15-<CHUNK>.zip]
+    --tiff-file-pattern PATTERN     Pattern for TIFF file within zip file.
+                                    [default: 15-<CHUNK>.tif]
+
+    Filename patterns will have <CHUNK> replaced with the current chunk.
 
 """
 
@@ -40,10 +54,10 @@ import sys
 import tempfile
 import zipfile
 
-from os import path
-
 from docopt import docopt
 from sh import wget, convert, unzip
+from six import iteritems
+from six.moves.urllib.parse import urlunsplit
 
 from . import Dataset
 
@@ -55,8 +69,6 @@ __doc__ = __doc__.format(
 # Logger for the main utility
 LOG = logging.getLogger(os.path.basename(sys.argv[0]))
 
-URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
-TIF_FORMAT = "15-{}.tif"
 EXPECT_SIZE = 14401 * 10801 * 2
 
 def char_range(frm, to):
@@ -65,17 +77,25 @@ def char_range(frm, to):
 
 CHUNKS = list(char_range('A', 'X'))
 
-def download(target, temp_dir):
-    zip_path = path.join(temp_dir, "temp.zip")
-    tgt_path = path.join(temp_dir, "chunk")
+def expand_pattern(pattern, **kwargs):
+    """Interpolate filename patterns."""
+    for k, v in kwargs.items():
+        pattern = pattern.replace('<'+k+'>', v)
+    return pattern
+
+def download(target, temp_dir, host, path, zip_pattern, tiff_pattern):
+    zip_path = os.path.join(temp_dir, "temp.zip")
+    tgt_path = os.path.join(temp_dir, "chunk")
 
     for chunk_idx, chunk in enumerate(CHUNKS):
         LOG.info('Fetching chunk {0}/{1}'.format(chunk_idx+1, len(CHUNKS)))
 
-        tif_name = TIF_FORMAT.format(chunk)
-        tif_path = path.join(temp_dir, tif_name)
+        tif_name = expand_pattern(tiff_pattern, CHUNK=chunk)
+        tif_path = os.path.join(temp_dir, tif_name)
 
-        url = URL_FORMAT.format(chunk)
+        url = urlunsplit((
+            'http', host, '/'.join((path, expand_pattern(zip_pattern, CHUNK=chunk))), '', ''
+        ))
         LOG.info('GET-ing {0}'.format(url))
         wget(url, q=True, O=zip_path)
         
@@ -109,7 +129,12 @@ def main():
 
     with open(target, "wb") as target_f:
         with tempfile.TemporaryDirectory() as temp_dir:
-            download(target_f, temp_dir)
+            download(
+                target_f, temp_dir,
+                host = opts['--host'], path = opts['--path'],
+                tiff_pattern = opts['--tiff-file-pattern'],
+                zip_pattern = opts['--zip-file-pattern'],
+            )
 
 if __name__ == "__main__":
     main()
