@@ -22,7 +22,7 @@ Usage:
     ruaumoko-download (-h | --help)
     ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--path PATH]
         [--tiff-file-pattern PATTERN] [--zip-file-pattern PATTERN]
-        [<dataset-location>]
+        [--chunks CHUNKS] [<dataset-location>]
 
 Options:
     -h, --help                      Print a brief usage summary.
@@ -40,8 +40,14 @@ Advanced options:
                                     [default: 15-<CHUNK>.zip]
     --tiff-file-pattern PATTERN     Pattern for TIFF file within zip file.
                                     [default: 15-<CHUNK>.tif]
+    --chunks CHUNKS                 Download only specific chunks from the
+                                    server. See below.
 
     Filename patterns will have <CHUNK> replaced with the current chunk.
+
+    Specific chunks are specified as a comma-separated list of chunk ids. For
+    example, the option "--chunks A,G,H" will fetch only chunks A, G and H from
+    the server.
 
 """
 
@@ -76,6 +82,7 @@ def char_range(frm, to):
     # inclusive endpoints
     return map(chr, range(ord(frm), ord(to) + 1))
 
+# Default set of chunks to download
 CHUNKS = list(char_range('A', 'X'))
 
 def expand_pattern(pattern, **kwargs):
@@ -84,12 +91,15 @@ def expand_pattern(pattern, **kwargs):
         pattern = pattern.replace('<'+k+'>', v)
     return pattern
 
-def download(target, temp_dir, host, path, zip_pattern, tiff_pattern):
+def download(target, temp_dir, host, path, zip_pattern, tiff_pattern, chunks=None):
     zip_path = os.path.join(temp_dir, "temp.zip")
     tgt_path = os.path.join(temp_dir, "chunk")
 
-    for chunk_idx, chunk in enumerate(CHUNKS):
-        LOG.info('Fetching chunk {0}/{1}'.format(chunk_idx+1, len(CHUNKS)))
+    chunks = chunks.split(',') if chunks is not None else CHUNKS
+    LOG.info('Fetching the following chunks: {0}'.format(','.join(chunks)))
+
+    for chunk_idx, chunk in enumerate(chunks):
+        LOG.info('Fetching chunk {0}/{1}'.format(chunk_idx+1, len(chunks)))
 
         tif_name = expand_pattern(tiff_pattern, CHUNK=chunk)
         tif_path = os.path.join(temp_dir, tif_name)
@@ -135,6 +145,7 @@ def main():
                 host = opts['--host'], path = opts['--path'],
                 tiff_pattern = opts['--tiff-file-pattern'],
                 zip_pattern = opts['--zip-file-pattern'],
+                chunks = opts['--chunks'],
             )
 
 if __name__ == "__main__":
