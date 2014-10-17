@@ -9,3 +9,6 @@ magicmemoryview
 
 # Downloader
 sh
+
+# Command-line option parsing
+docopt
