@@ -15,40 +15,95 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
+"""
+Download Digital Elevation Map (DEM) data for the Ruaumoko server.
+
+Usage:
+    ruaumoko-download (-h | --help)
+    ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--chunks CHUNKS]
+        [<dataset-location>]
+
+Options:
+    -h, --help                      Print a brief usage summary.
+    -v, --verbose                   Be verbose in logging progress.
+
+    <dataset-location>              Location to store DEM dataset.
+                                    [default: {default_location}]
+
+Advanced options:
+    --host HOSTNAME                 Host name of DEM server.
+                                    [default: www.viewfinderpanoramas.org]
+    --chunks CHUNKS                 Download only specific chunks from the
+                                    server. See below.
+
+    Specific chunks are specified as a comma-separated list of chunk ids. For
+    example, the option "--chunks A,G,H" will fetch only chunks A, G and H from
+    the server.
+
+"""
 
 from __future__ import print_function
 
-import sys
+import logging
 import os
 import shutil
+import sys
 import tempfile
 import zipfile
 
-from os import path
-
+from docopt import docopt
 from sh import wget, convert, unzip
 
 from . import Dataset
+from ._compat import TemporaryDirectory, urlunsplit
 
-URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
-TIF_FORMAT = "15-{}.tif"
+# HACK: interpolate dataset default location into docopt string.
+__doc__ = __doc__.format(
+    default_location = Dataset.default_location,
+)
+
+# Logger for the main utility
+LOG = logging.getLogger(os.path.basename(sys.argv[0]))
+
+# Filename patterns
+TIFF_PATTERN = '15-<CHUNK>.tif'
+ZIP_PATTERN = '15-<CHUNK>.zip'
+DEM_PATH = 'DEM/TIF15'
+
 EXPECT_SIZE = 14401 * 10801 * 2
 
 def char_range(frm, to):
     # inclusive endpoints
     return map(chr, range(ord(frm), ord(to) + 1))
 
+# Default set of chunks to download
 CHUNKS = list(char_range('A', 'X'))
 
-def download(target, temp_dir):
-    zip_path = path.join(temp_dir, "temp.zip")
-    tgt_path = path.join(temp_dir, "chunk")
+def expand_pattern(pattern, **kwargs):
+    """Interpolate filename patterns."""
+    for k, v in kwargs.items():
+        pattern = pattern.replace('<'+k+'>', v)
+    return pattern
 
-    for chunk in CHUNKS:
-        tif_name = TIF_FORMAT.format(chunk)
-        tif_path = path.join(temp_dir, tif_name)
+def download(target, temp_dir, host, path=DEM_PATH,
+        zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None):
+    zip_path = os.path.join(temp_dir, "temp.zip")
+    tgt_path = os.path.join(temp_dir, "chunk")
 
-        wget(URL_FORMAT.format(chunk), q=True, O=zip_path)
+    chunks = chunks.split(',') if chunks is not None else CHUNKS
+    LOG.info('Fetching the following chunks: {0}'.format(','.join(chunks)))
+
+    for chunk_idx, chunk in enumerate(chunks):
+        LOG.info('Fetching chunk {0}/{1}'.format(chunk_idx+1, len(chunks)))
+
+        tif_name = expand_pattern(tiff_pattern, CHUNK=chunk)
+        tif_path = os.path.join(temp_dir, tif_name)
+
+        url = urlunsplit((
+            'http', host, '/'.join((path, expand_pattern(zip_pattern, CHUNK=chunk))), '', ''
+        ))
+        LOG.info('GET-ing {0}'.format(url))
+        wget(url, q=True, O=zip_path)
         
         with zipfile.ZipFile(zip_path, 'r') as pack:
             contents = pack.namelist()
@@ -69,17 +124,22 @@ def download(target, temp_dir):
         os.unlink(tgt_path)
 
 def main():
-    if len(sys.argv) == 1:
-        target = Dataset.default_location
-    elif len(sys.argv) == 2:
-        target = sys.argv[1]
-    else:
-        print("Usage: {} [{}]".format(sys.argv[0], Dataset.default_location))
-        sys.exit(1)
+    opts = docopt(__doc__)
+    logging.basicConfig(
+        level=logging.INFO if opts['--verbose'] else logging.WARN,
+        format='%(name)s:%(levelname)s: %(message)s'
+    )
+
+    target = opts['<dataset-location>'] or Dataset.default_location
+    LOG.info('Downloading DEM to "{0}"'.format(target))
 
     with open(target, "wb") as target_f:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            download(target_f, temp_dir)
+        with TemporaryDirectory() as temp_dir:
+            download(
+                target_f, temp_dir,
+                host = opts['--host'],
+                chunks = opts['--chunks'],
+            )
 
 if __name__ == "__main__":
     main()
