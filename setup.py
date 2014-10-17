@@ -46,12 +46,9 @@ def get_version():
 
 console_scripts = [
     "ruaumoko-api = ruaumoko.api:main",
-    "ruaumoko-get = ruaumoko.get_cmd:main"
+    "ruaumoko-get = ruaumoko.get_cmd:main",
+    "ruaumoko-download = ruaumoko.download:main",
 ]
-
-PY2 = sys.version_info[0] == 2
-if not PY2:
-    console_scripts.append("ruaumoko-download = ruaumoko.download:main")
 
 setup(
     name="Ruaumoko",
