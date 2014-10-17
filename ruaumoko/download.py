@@ -21,7 +21,6 @@ Download Digital Elevation Map (DEM) data for the Ruaumoko server.
 Usage:
     ruaumoko-download (-h | --help)
     ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--path PATH]
-        [--tiff-file-pattern PATTERN] [--zip-file-pattern PATTERN]
         [--chunks CHUNKS] [<dataset-location>]
 
 Options:
@@ -36,14 +35,8 @@ Advanced options:
                                     [default: www.viewfinderpanoramas.org]
     --path PATH                     Path to DEM TIF files on server.
                                     [default: DEM/TIF15]
-    --zip-file-pattern PATTERN      Pattern for zip file to fetch from server.
-                                    [default: 15-<CHUNK>.zip]
-    --tiff-file-pattern PATTERN     Pattern for TIFF file within zip file.
-                                    [default: 15-<CHUNK>.tif]
     --chunks CHUNKS                 Download only specific chunks from the
                                     server. See below.
-
-    Filename patterns will have <CHUNK> replaced with the current chunk.
 
     Specific chunks are specified as a comma-separated list of chunk ids. For
     example, the option "--chunks A,G,H" will fetch only chunks A, G and H from
@@ -74,6 +67,10 @@ __doc__ = __doc__.format(
 # Logger for the main utility
 LOG = logging.getLogger(os.path.basename(sys.argv[0]))
 
+# Filename patterns
+TIFF_PATTERN = '15-<CHUNK>.tif'
+ZIP_PATTERN = '15-<CHUNK>.zip'
+
 EXPECT_SIZE = 14401 * 10801 * 2
 
 def char_range(frm, to):
@@ -89,7 +86,8 @@ def expand_pattern(pattern, **kwargs):
         pattern = pattern.replace('<'+k+'>', v)
     return pattern
 
-def download(target, temp_dir, host, path, zip_pattern, tiff_pattern, chunks=None):
+def download(target, temp_dir, host, path,
+        zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None):
     zip_path = os.path.join(temp_dir, "temp.zip")
     tgt_path = os.path.join(temp_dir, "chunk")
 
@@ -141,8 +139,6 @@ def main():
             download(
                 target_f, temp_dir,
                 host = opts['--host'], path = opts['--path'],
-                tiff_pattern = opts['--tiff-file-pattern'],
-                zip_pattern = opts['--zip-file-pattern'],
                 chunks = opts['--chunks'],
             )
 
