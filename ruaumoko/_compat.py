@@ -15,6 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
+#
+# TemporaryDirectory implementation imported from 3.4.0 Python standard library
+# (https://hg.python.org/cpython/file/04f714765c13/Lib/tempfile.py). Copyright
+# and distribution terms at
+# https://hg.python.org/cpython/file/04f714765c13/LICENSE.
 """Compatibility utilities.
 
 Python 2/3 compatibility shims.
@@ -29,12 +34,10 @@ except ImportError:
 try:
     from tempfile import TemporaryDirectory
 except ImportError:
-    # Taken from:
-    # http://stackoverflow.com/questions/19296146/with-tempfile-temporarydirectory
-    import warnings as _warnings
-    import os as _os
+    import weakref as _weakref
+    import shutil as _shutil
 
-    from tempfile import mkdtemp
+    from tempfile import mkdtemp, template
 
     class TemporaryDirectory(object):
         """Create and return a temporary directory.  This has the same
@@ -48,10 +51,22 @@ except ImportError:
         in it are removed.
         """
 
-        def __init__(self, suffix="", prefix="tmp", dir=None):
-            self._closed = False
-            self.name = None # Handle mkdtemp raising an exception
+        # Handle mkdtemp raising an exception
+        name = None
+        _finalizer = None
+        _closed = False
+
+        def __init__(self, suffix="", prefix=template, dir=None):
             self.name = mkdtemp(suffix, prefix, dir)
+            # HACK: work around lack of weakref.finalize in 2.7
+            self._self_weakref = _weakref.ref(self, lambda: TemporaryDirectory._cleanup(
+                self.name, warn_message="Implicitly cleaning up {!r}".format(self)))
+
+        @classmethod
+        def _cleanup(cls, name, warn_message=None):
+            _shutil.rmtree(name)
+            if warn_message is not None:
+                _warnings.warn(warn_message, ResourceWarning)
 
         def __repr__(self):
             return "<{} {!r}>".format(self.__class__.__name__, self.name)
@@ -59,61 +74,13 @@ except ImportError:
         def __enter__(self):
             return self.name
 
-        def cleanup(self, _warn=False):
-            if self.name and not self._closed:
-                try:
-                    self._rmtree(self.name)
-                except (TypeError, AttributeError) as ex:
-                    # Issue #10188: Emit a warning on stderr
-                    # if the directory could not be cleaned
-                    # up due to missing globals
-                    if "None" not in str(ex):
-                        raise
-                    print("ERROR: {!r} while cleaning up {!r}".format(ex, self,),
-                          file=_sys.stderr)
-                    return
-                self._closed = True
-                if _warn:
-                    self._warn("Implicitly cleaning up {!r}".format(self),
-                               ResourceWarning)
-
         def __exit__(self, exc, value, tb):
             self.cleanup()
 
-        def __del__(self):
-            # Issue a ResourceWarning if implicit cleanup needed
-            self.cleanup(_warn=True)
-
-        # XXX (ncoghlan): The following code attempts to make
-        # this class tolerant of the module nulling out process
-        # that happens during CPython interpreter shutdown
-        # Alas, it doesn't actually manage it. See issue #10188
-        _listdir = staticmethod(_os.listdir)
-        _path_join = staticmethod(_os.path.join)
-        _isdir = staticmethod(_os.path.isdir)
-        _islink = staticmethod(_os.path.islink)
-        _remove = staticmethod(_os.remove)
-        _rmdir = staticmethod(_os.rmdir)
-        _warn = _warnings.warn
-
-        def _rmtree(self, path):
-            # Essentially a stripped down version of shutil.rmtree.  We can't
-            # use globals because they may be None'ed out at shutdown.
-            for name in self._listdir(path):
-                fullname = self._path_join(path, name)
-                try:
-                    isdir = self._isdir(fullname) and not self._islink(fullname)
-                except OSError:
-                    isdir = False
-                if isdir:
-                    self._rmtree(fullname)
-                else:
-                    try:
-                        self._remove(fullname)
-                    except OSError:
-                        pass
-            try:
-                self._rmdir(path)
-            except OSError:
-                pass
+        def cleanup(self):
+            if self._finalizer is not None:
+                self._finalizer.detach()
+            if self.name is not None and not self._closed:
+                _shutil.rmtree(self.name)
+                self._closed = True
 
