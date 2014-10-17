@@ -24,6 +24,7 @@ Usage:
 
 Options:
     -h, --help          Print a brief usage summary.
+    -v, --verbose       Be verbose in logging progress.
 
     <dataset-location>  Location to store DEM dataset.
                         [default: {default_location}]
@@ -32,9 +33,10 @@ Options:
 
 from __future__ import print_function
 
-import sys
+import logging
 import os
 import shutil
+import sys
 import tempfile
 import zipfile
 
@@ -50,6 +52,9 @@ __doc__ = __doc__.format(
     default_location = Dataset.default_location,
 )
 
+# Logger for the main utility
+LOG = logging.getLogger(os.path.basename(sys.argv[0]))
+
 URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
 TIF_FORMAT = "15-{}.tif"
 EXPECT_SIZE = 14401 * 10801 * 2
@@ -64,11 +69,15 @@ def download(target, temp_dir):
     zip_path = path.join(temp_dir, "temp.zip")
     tgt_path = path.join(temp_dir, "chunk")
 
-    for chunk in CHUNKS:
+    for chunk_idx, chunk in enumerate(CHUNKS):
+        LOG.info('Fetching chunk {0}/{1}'.format(chunk_idx+1, len(CHUNKS)))
+
         tif_name = TIF_FORMAT.format(chunk)
         tif_path = path.join(temp_dir, tif_name)
 
-        wget(URL_FORMAT.format(chunk), q=True, O=zip_path)
+        url = URL_FORMAT.format(chunk)
+        LOG.info('GET-ing {0}'.format(url))
+        wget(url, q=True, O=zip_path)
         
         with zipfile.ZipFile(zip_path, 'r') as pack:
             contents = pack.namelist()
@@ -90,7 +99,13 @@ def download(target, temp_dir):
 
 def main():
     opts = docopt(__doc__)
+    logging.basicConfig(
+        level=logging.INFO if opts['--verbose'] else logging.WARN,
+        format='%(name)s:%(levelname)s: %(message)s'
+    )
+
     target = opts['<dataset-location>'] or Dataset.default_location
+    LOG.info('Downloading DEM to "{0}"'.format(target))
 
     with open(target, "wb") as target_f:
         with tempfile.TemporaryDirectory() as temp_dir:
