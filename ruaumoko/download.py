@@ -21,14 +21,18 @@ Download Digital Elevation Map (DEM) data for the Ruaumoko server.
 Usage:
     ruaumoko-download (-h | --help)
     ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--chunks CHUNKS]
-        [<dataset-location>]
+        [--chunk-file-prefix PREFIX] [--split-chunks] [<dataset-location>]
 
 Options:
     -h, --help                      Print a brief usage summary.
     -v, --verbose                   Be verbose in logging progress.
 
-    <dataset-location>              Location to store DEM dataset.
+    <dataset-location>              Location to store DEM dataset. See below.
                                     [default: {default_location}]
+
+    The dataset location can be a directory and individual uncompressed TIFF
+    files can be extracted there rather than being appended to a single file.
+    See the --split-chunks option.
 
 Advanced options:
     --host HOSTNAME                 Host name of DEM server.
@@ -39,6 +43,12 @@ Advanced options:
     Specific chunks are specified as a comma-separated list of chunk ids. For
     example, the option "--chunks A,G,H" will fetch only chunks A, G and H from
     the server.
+
+Options for saving individual chunks:
+    --split-chunks                  If specified, save each chunk to its own file.
+
+    --chunk-file-prefix PREFIX      Filename prefix for individual chunk file
+                                    downloads. [default: chunk-]
 
 """
 
@@ -88,7 +98,8 @@ def expand_pattern(pattern, **kwargs):
     return pattern
 
 def download(target, temp_dir, host, path=DEM_PATH,
-        zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None):
+        zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None,
+        chunk_prefix=None, chunk_directory=None):
     tgt_path = os.path.join(temp_dir, "chunk")
 
     chunks = chunks.split(',') if chunks is not None else CHUNKS
@@ -128,15 +139,26 @@ def download(target, temp_dir, host, path=DEM_PATH,
             with open(tif_path, 'wb') as out_fobj:
                 shutil.copyfileobj(tiff_fobj, out_fobj)
 
-        convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
+        # Saving individual chunks
+        if chunk_directory is not None:
+            chunk_filename = os.path.join(chunk_directory,
+                    chunk_prefix + '{0:02d}'.format(chunk_idx) + '.tiff')
+            with open(chunk_filename, "wb") as dst, open(tif_path, "rb") as src:
+                shutil.copyfileobj(src, dst)
+
+        # Concatenation of chunks
+        if target is not None:
+            convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
+
+            if os.stat(tgt_path).st_size != EXPECT_SIZE:
+                raise ValueError("Bad converted size: {}".format(chunk))
+
+            with open(tgt_path, "rb") as f:
+                shutil.copyfileobj(f, target)
+
+            os.unlink(tgt_path)
+
         os.unlink(tif_path)
-
-        if os.stat(tgt_path).st_size != EXPECT_SIZE:
-            raise ValueError("Bad converted size: {}".format(chunk))
-
-        with open(tgt_path, "rb") as f:
-            shutil.copyfileobj(f, target)
-        os.unlink(tgt_path)
 
 def main():
     opts = docopt(__doc__)
@@ -148,13 +170,25 @@ def main():
     target = opts['<dataset-location>'] or Dataset.default_location
     LOG.info('Downloading DEM to "{0}"'.format(target))
 
-    with open(target, "wb") as target_f:
-        with TemporaryDirectory() as temp_dir:
-            download(
-                target_f, temp_dir,
-                host = opts['--host'],
-                chunks = opts['--chunks'],
-            )
+    with TemporaryDirectory() as temp_dir:
+        if opts['--split-chunks']:
+            # Save chunks
+            LOG.info('Saving data as multiple chunks in "{0}"'.format(target))
+            target_f = None
+            chunk_dir = target
+        else:
+            # Save traditional format
+            LOG.info('Saving data as single file to "{0}"'.format(target))
+            target_f = open(target, "wb")
+            chunk_dir = None
+
+        download(
+            target_f, temp_dir,
+            host = opts['--host'],
+            chunks = opts['--chunks'],
+            chunk_prefix = opts['--chunk-file-prefix'],
+            chunk_directory = chunk_dir,
+        )
 
 if __name__ == "__main__":
     try:
