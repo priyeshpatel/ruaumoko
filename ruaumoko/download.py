@@ -15,6 +15,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
+"""
+Download Digital Elevation Map (DEM) data for the Ruaumoko server.
+
+Usage:
+    ruaumoko-download (-h | --help)
+    ruaumoko-download [options] [<dataset-location>]
+
+Options:
+    -h, --help          Print a brief usage summary.
+
+    <dataset-location>  Location to store DEM dataset.
+                        [default: {default_location}]
+
+"""
 
 from __future__ import print_function
 
@@ -26,9 +40,15 @@ import zipfile
 
 from os import path
 
+from docopt import docopt
 from sh import wget, convert, unzip
 
 from . import Dataset
+
+# HACK: interpolate dataset default location into docopt string.
+__doc__ = __doc__.format(
+    default_location = Dataset.default_location,
+)
 
 URL_FORMAT = "http://www.viewfinderpanoramas.org/DEM/TIF15/15-{}.zip"
 TIF_FORMAT = "15-{}.tif"
@@ -69,13 +89,8 @@ def download(target, temp_dir):
         os.unlink(tgt_path)
 
 def main():
-    if len(sys.argv) == 1:
-        target = Dataset.default_location
-    elif len(sys.argv) == 2:
-        target = sys.argv[1]
-    else:
-        print("Usage: {} [{}]".format(sys.argv[0], Dataset.default_location))
-        sys.exit(1)
+    opts = docopt(__doc__)
+    target = opts['<dataset-location>'] or Dataset.default_location
 
     with open(target, "wb") as target_f:
         with tempfile.TemporaryDirectory() as temp_dir:
