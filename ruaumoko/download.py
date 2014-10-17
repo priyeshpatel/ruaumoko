@@ -60,6 +60,7 @@ from six import iteritems
 from six.moves.urllib.parse import urlunsplit
 
 from . import Dataset
+from ._compat import TemporaryDirectory
 
 # HACK: interpolate dataset default location into docopt string.
 __doc__ = __doc__.format(
@@ -128,7 +129,7 @@ def main():
     LOG.info('Downloading DEM to "{0}"'.format(target))
 
     with open(target, "wb") as target_f:
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with TemporaryDirectory() as temp_dir:
             download(
                 target_f, temp_dir,
                 host = opts['--host'], path = opts['--path'],
