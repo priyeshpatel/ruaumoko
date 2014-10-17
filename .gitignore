@@ -6,3 +6,4 @@ uwsgi.yaml
 ruaumoko/dataset.c
 *.so
 build/
+*.egg-info
