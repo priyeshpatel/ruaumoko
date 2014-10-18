@@ -36,7 +36,7 @@ Options:
 
 Advanced options:
     --host HOSTNAME                 Host name of DEM server.
-                                    [default: www.viewfinderpanoramas.org]
+                                    [default: {default_host}]
     --chunks CHUNKS                 Download only specific chunks from the
                                     server. See below.
 
@@ -72,13 +72,11 @@ from sh import convert
 from . import Dataset
 from ._compat import TemporaryDirectory, urlunsplit
 
-# HACK: interpolate dataset default location into docopt string.
-__doc__ = __doc__.format(
-    default_location = Dataset.default_location,
-)
-
 # Logger for the main utility
 LOG = logging.getLogger(os.path.basename(sys.argv[0]))
+
+# Defaults
+DEFAULT_HOST = 'www.viewfinderpanoramas.org'
 
 # Filename patterns
 TIFF_PATTERN = '15-<CHUNK>.tif'
@@ -86,6 +84,12 @@ ZIP_PATTERN = '15-<CHUNK>.zip'
 DEM_PATH = 'DEM/TIF15'
 
 EXPECT_SIZE = 14401 * 10801 * 2
+
+# HACK: interpolate defaults into docopt string.
+__doc__ = __doc__.format(
+    default_location = Dataset.default_location,
+    default_host = DEFAULT_HOST,
+)
 
 def char_range(frm, to):
     # inclusive endpoints
@@ -100,7 +104,7 @@ def expand_pattern(pattern, **kwargs):
         pattern = pattern.replace('<'+k+'>', v)
     return pattern
 
-def download(target, temp_dir, host, path=DEM_PATH,
+def download(target, temp_dir, host=DEFAULT_HOST, path=DEM_PATH,
         zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None,
         chunk_prefix=None, chunk_directory=None):
     tgt_path = os.path.join(temp_dir, "chunk")
