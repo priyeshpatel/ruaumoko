@@ -5,10 +5,10 @@ python:
     - "3.3"
 
 install:
-    # Install stuff for running test suite
-    - "pip install nose coverage"
     # Install (specific) requirements and ourself
     - "pip install -r requirements.txt"
+    # Install stuff for running test suite
+    - "pip install -r tests/requirements.txt"
 
 # Run tests
 script: "nosetests --with-coverage --cover-package=ruaumoko"
