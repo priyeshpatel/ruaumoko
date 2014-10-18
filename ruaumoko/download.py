@@ -125,7 +125,8 @@ def download(target, temp_dir, host, path=DEM_PATH,
                 raise RuntimeError('Error fetching DEM. (Bad zip file.)')
 
             tiff_fobj = pack.open(tiff_info)
-            shutil.copyfileobj(tiff_fobj, open(tif_path, 'wb'))
+            with open(tif_path, 'wb') as out_fobj:
+                shutil.copyfileobj(tiff_fobj, out_fobj)
 
         convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
         os.unlink(tif_path)
