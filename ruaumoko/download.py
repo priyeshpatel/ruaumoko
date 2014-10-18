@@ -107,9 +107,8 @@ def download(target, temp_dir, host, path=DEM_PATH,
         resp = requests.get(url)
 
         if resp.status_code != 200:
-            # TODO: Decide if this should be a fatal error
             LOG.error('Error fetching DEM: {0}'.format(resp.status_code))
-            continue
+            raise RuntimeError('Error fetching DEM. (HTTP {0} error.)'.format(resp.status_code))
 
         # Open downloaded content as a file object
         content_fobj = io.BytesIO(resp.content)
@@ -123,10 +122,11 @@ def download(target, temp_dir, host, path=DEM_PATH,
                 # TODO: Decide if this should be a fatal error
                 LOG.error('DEM zip does not contain expected file {0}'.format(tif_name))
                 LOG.error('DEM zip contains: {0}'.format(pack.namelist()))
-                continue
+                raise RuntimeError('Error fetching DEM. (Bad zip file.)')
 
             tiff_fobj = pack.open(tiff_info)
-            shutil.copyfileobj(tiff_fobj, open(tif_path, 'wb'))
+            with open(tif_path, 'wb') as out_fobj:
+                shutil.copyfileobj(tiff_fobj, out_fobj)
 
         convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
         os.unlink(tif_path)
@@ -157,4 +157,8 @@ def main():
             )
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        LOG.error('Unrecoverable error: {0}'.format(e))
+        sys.exit(1)
