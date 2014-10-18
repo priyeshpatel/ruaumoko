@@ -106,7 +106,7 @@ def expand_pattern(pattern, **kwargs):
 
 def download(target, temp_dir, host=DEFAULT_HOST, path=DEM_PATH,
         zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None,
-        chunk_prefix=None, chunk_directory=None):
+        chunk_prefix=None, chunk_directory=None, expect_size=EXPECT_SIZE):
     tgt_path = os.path.join(temp_dir, "chunk")
 
     chunks = chunks or CHUNKS
@@ -162,8 +162,10 @@ def download(target, temp_dir, host=DEFAULT_HOST, path=DEM_PATH,
         if target is not None:
             convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
 
-            if os.stat(tgt_path).st_size != EXPECT_SIZE:
-                raise ValueError("Bad converted size: {}".format(chunk))
+            target_size = os.stat(tgt_path).st_size
+            if target_size != expect_size:
+                raise ValueError("Bad converted size {1} in chunk {0} (expected {2})".format(
+                    chunk, target_size, expect_size))
 
             with open(tgt_path, "rb") as f:
                 shutil.copyfileobj(f, target)
