@@ -1,14 +1,4 @@
-# API
-Flask
-
-# Installation
+# Required for setup.py
 Cython
 
-# Core
-magicmemoryview
-
-# Downloader
-sh
-
-# Command-line option parsing
-docopt
+-e .

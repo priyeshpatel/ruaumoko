@@ -63,10 +63,17 @@ setup(
     description='Ground Elevation API',
     long_description=long_description,
     install_requires=[
-        "docopt",
+        # Web API
         "Flask",
+
+        # Command line processing
+        "docopt",
+
+        # Core functionality
         "magicmemoryview",
-        "sh"
+
+        # Downloader
+        "sh",
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
