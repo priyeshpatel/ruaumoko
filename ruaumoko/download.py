@@ -194,13 +194,14 @@ def main():
             target_f = open(target, "wb")
             chunk_dir = None
 
-        download(
-            target_f, temp_dir,
-            host = opts['--host'],
-            chunks = opts['--chunks'],
-            chunk_prefix = opts['--chunk-file-prefix'],
-            chunk_directory = chunk_dir,
-        )
+        with target_f:
+            download(
+                target_f, temp_dir,
+                host = opts['--host'],
+                chunks = opts['--chunks'],
+                chunk_prefix = opts['--chunk-file-prefix'],
+                chunk_directory = chunk_dir,
+            )
 
 if __name__ == "__main__":
     try:
