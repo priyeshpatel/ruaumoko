@@ -73,7 +73,7 @@ setup(
         "magicmemoryview",
 
         # Downloader
-        "sh",
+        "sh", "requests",
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

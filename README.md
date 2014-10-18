@@ -22,8 +22,7 @@ the [GNU GPL 3](http://gplv3.fsf.org/) (see LICENSE).
 ## Dependencies
 
 Python dependences may be found in `requirements.txt`. To run the downloader
-you will also require the `unzip` command (from the Debian package of the same
-name) and `convert` (from `imagemagick`).
+you will also require the `convert` command (from `imagemagick`).
 
 ## Dataset Format
 

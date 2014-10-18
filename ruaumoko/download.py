@@ -44,6 +44,7 @@ Advanced options:
 
 from __future__ import print_function
 
+import io
 import logging
 import os
 import shutil
@@ -52,7 +53,8 @@ import tempfile
 import zipfile
 
 from docopt import docopt
-from sh import wget, convert, unzip
+import requests
+from sh import convert
 
 from . import Dataset
 from ._compat import TemporaryDirectory, urlunsplit
@@ -87,7 +89,6 @@ def expand_pattern(pattern, **kwargs):
 
 def download(target, temp_dir, host, path=DEM_PATH,
         zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None):
-    zip_path = os.path.join(temp_dir, "temp.zip")
     tgt_path = os.path.join(temp_dir, "chunk")
 
     chunks = chunks.split(',') if chunks is not None else CHUNKS
@@ -103,15 +104,29 @@ def download(target, temp_dir, host, path=DEM_PATH,
             'http', host, '/'.join((path, expand_pattern(zip_pattern, CHUNK=chunk))), '', ''
         ))
         LOG.info('GET-ing {0}'.format(url))
-        wget(url, q=True, O=zip_path)
-        
-        with zipfile.ZipFile(zip_path, 'r') as pack:
-            contents = pack.namelist()
-            if contents != [tif_name]:
-                raise ValueError("Bad archive contents: {:r}".format(contents))
-        
-        unzip(zip_path, d=temp_dir)
-        os.unlink(zip_path)
+        resp = requests.get(url)
+
+        if resp.status_code != 200:
+            # TODO: Decide if this should be a fatal error
+            LOG.error('Error fetching DEM: {0}'.format(resp.status_code))
+            continue
+
+        # Open downloaded content as a file object
+        content_fobj = io.BytesIO(resp.content)
+
+        # Open content as zip
+        with zipfile.ZipFile(content_fobj, 'r') as pack:
+            # Extract TIFF
+            try:
+                tiff_info = pack.getinfo(tif_name)
+            except KeyError:
+                # TODO: Decide if this should be a fatal error
+                LOG.error('DEM zip does not contain expected file {0}'.format(tif_name))
+                LOG.error('DEM zip contains: {0}'.format(pack.namelist()))
+                continue
+
+            tiff_fobj = pack.open(tiff_info)
+            shutil.copyfileobj(tiff_fobj, open(tif_path, 'wb'))
 
         convert(tif_path, '-quiet', 'GRAY:{}'.format(tgt_path))
         os.unlink(tif_path)
