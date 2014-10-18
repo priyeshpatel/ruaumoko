@@ -7,3 +7,4 @@ ruaumoko/dataset.c
 *.so
 build/
 *.egg-info
+.coverage
