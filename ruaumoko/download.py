@@ -48,7 +48,10 @@ Options for saving individual chunks:
     --split-chunks                  If specified, save each chunk to its own file.
 
     --chunk-file-prefix PREFIX      Filename prefix for individual chunk file
-                                    downloads. [default: chunk-]
+                                    downloads. If unset, the original filename is used.
+
+    The chunk file prefix should be something like "chunk-" which will result
+    in files called "chunk-00.tiff", "chunk-01.tiff", etc. being written.
 
 """
 
@@ -141,8 +144,13 @@ def download(target, temp_dir, host, path=DEM_PATH,
 
         # Saving individual chunks
         if chunk_directory is not None:
-            chunk_filename = os.path.join(chunk_directory,
+            if chunk_prefix is not None:
+                # Use chunk prefix to calculate filename
+                chunk_filename = os.path.join(chunk_directory,
                     chunk_prefix + '{0:02d}'.format(chunk_idx) + '.tiff')
+            else:
+                # Use original filename
+                chunk_filename = os.path.join(chunk_directory, tif_name)
             with open(chunk_filename, "wb") as dst, open(tif_path, "rb") as src:
                 shutil.copyfileobj(src, dst)
 
