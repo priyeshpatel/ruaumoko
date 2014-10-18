@@ -1,0 +1,9 @@
+# Boilerplate to select python and add v2 and v3 to test matrix.
+language: python
+python:
+    - "2.7"
+    - "3.3"
+
+install:
+    # Install (specific) requirements
+    - "pip install -r requirements.txt"
