@@ -109,7 +109,7 @@ def download(target, temp_dir, host=DEFAULT_HOST, path=DEM_PATH,
         chunk_prefix=None, chunk_directory=None):
     tgt_path = os.path.join(temp_dir, "chunk")
 
-    chunks = chunks.split(',') if chunks is not None else CHUNKS
+    chunks = chunks or CHUNKS
     LOG.info('Fetching the following chunks: {0}'.format(','.join(chunks)))
 
     for chunk_idx, chunk in enumerate(chunks):
