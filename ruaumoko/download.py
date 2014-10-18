@@ -21,7 +21,8 @@ Download Digital Elevation Map (DEM) data for the Ruaumoko server.
 Usage:
     ruaumoko-download (-h | --help)
     ruaumoko-download [(-v | --verbose)] [--host HOSTNAME] [--chunks CHUNKS]
-        [--chunk-file-prefix PREFIX] [--split-chunks] [<dataset-location>]
+        [--chunk-file-prefix PREFIX] [--split-chunks] [--expect-resolution WxH]
+        [<dataset-location>]
 
 Options:
     -h, --help                      Print a brief usage summary.
@@ -39,6 +40,8 @@ Advanced options:
                                     [default: {default_host}]
     --chunks CHUNKS                 Download only specific chunks from the
                                     server. See below.
+    --expect-resolution WxH         Expect tiles to have width W and height H.
+                                    [default: {default_res[0]}x{default_res[1]}]
 
     Specific chunks are specified as a comma-separated list of chunk ids. For
     example, the option "--chunks A,G,H" will fetch only chunks A, G and H from
@@ -83,12 +86,13 @@ TIFF_PATTERN = '15-<CHUNK>.tif'
 ZIP_PATTERN = '15-<CHUNK>.zip'
 DEM_PATH = 'DEM/TIF15'
 
-EXPECT_SIZE = 14401 * 10801 * 2
+DEFAULT_RESOLUTION = (14401, 10801)
 
 # HACK: interpolate defaults into docopt string.
 __doc__ = __doc__.format(
     default_location = Dataset.default_location,
     default_host = DEFAULT_HOST,
+    default_res = DEFAULT_RESOLUTION,
 )
 
 def char_range(frm, to):
@@ -106,8 +110,11 @@ def expand_pattern(pattern, **kwargs):
 
 def download(target, temp_dir, host=DEFAULT_HOST, path=DEM_PATH,
         zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None,
-        chunk_prefix=None, chunk_directory=None, expect_size=EXPECT_SIZE):
+        chunk_prefix=None, chunk_directory=None, expect_res=DEFAULT_RESOLUTION):
     tgt_path = os.path.join(temp_dir, "chunk")
+
+    # Expected raw data size is 2-bytes (16-bits) per pixel
+    expect_size = expect_res[0] * expect_res[1] * 2
 
     chunks = chunks or CHUNKS
     LOG.info('Fetching the following chunks: {0}'.format(','.join(chunks)))
@@ -184,6 +191,13 @@ def main():
     target = opts['<dataset-location>'] or Dataset.default_location
     LOG.info('Downloading DEM to "{0}"'.format(target))
 
+    expect_res_string = opts['--expect-resolution']
+    try:
+        expect_res = tuple(int(x) for x in expect_res_string.split('x'))
+    except:
+        LOG.error('Invalid resolution string: {0}'.format(expect_res_string))
+        return 1 # Error
+
     with TemporaryDirectory() as temp_dir:
         if opts['--split-chunks']:
             # Save chunks
@@ -203,11 +217,14 @@ def main():
                 chunks = opts['--chunks'],
                 chunk_prefix = opts['--chunk-file-prefix'],
                 chunk_directory = chunk_dir,
+                expect_res = expect_res,
             )
+
+    return 0 # Success
 
 if __name__ == "__main__":
     try:
-        main()
+        sys.exit(main())
     except Exception as e:
         LOG.error('Unrecoverable error: {0}'.format(e))
         sys.exit(1)
