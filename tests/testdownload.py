@@ -54,94 +54,87 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
     def __init__(self, *args, **kwargs):
         super(TestFullStackDownloader, self).__init__(*args, **kwargs)
 
-        # Load mock data
-        self.mock_zip = zipfile.ZipFile(os.path.join(DATA_DIR, 'dem-chunks.zip'))
-
     def responses_add_mocks(self, host='www.viewfinderpanoramas.org', path='DEM/TIF15'):
+        """Register mock HTTP responses for mock DEM data.
+
+        """
+        mock_zip = zipfile.ZipFile(os.path.join(DATA_DIR, 'dem-chunks.zip'))
         url_root = urlunsplit(('http', host, path, '', ''))
-        for info in self.mock_zip.infolist():
+        for info in mock_zip.infolist():
             file_url = url_root + '/' + info.filename
             LOG.info('Adding mock response for ' + file_url)
             responses.add(responses.GET, file_url,
-                    body=self.mock_zip.open(info).read(),
+                    body=mock_zip.open(info).read(),
                     content_type='application/zip')
+
+    def prepare_single_file_download(self):
+        """Create workspace and pathnames for a single-dataset download.
+
+        """
+        # Make downloader's temporary directory
+        ws_dir = os.path.join(self.tmp_dir, 'workspace')
+        LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
+        os.mkdir(ws_dir)
+
+        # Where to download to
+        tgt_path = os.path.join(self.tmp_dir, 'dataset')
+        LOG.info('Downloading to {0}'.format(tgt_path))
+
+        return ws_dir, tgt_path
+
+    def check_single_file_download(self, n_chunks, tgt_path, ws_dir):
+        """Check a single-file download."""
+
+        # We expect the size of the file to correspond to the right number of chunks
+        expected_size = n_chunks * (8 * 8 * 2)
+        tgt_size = os.stat(tgt_path).st_size
+        LOG.info('Downloaded data size is {0}, expecting {1}'.format(tgt_size, expected_size))
+        self.assertEqual(tgt_size, expected_size)
+
+        # We expect the temporary workspace to be empty
+        ws_list = os.listdir(ws_dir)
+        LOG.info('Workspace directory contents: {0}'.format(ws_list))
+        self.assertEqual(len(ws_list), 0)
 
     @responses.activate
     def test_download_two_chunks(self):
-        # Add mock data to responses
         self.responses_add_mocks()
+        ws_dir, tgt_path = self.prepare_single_file_download()
 
-        # Make downloader's temporary directory
-        ws_dir = os.path.join(self.tmp_dir, 'workspace')
-        LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
-        os.mkdir(ws_dir)
-
-        # Where to download to
-        tgt_path = os.path.join(self.tmp_dir, 'dataset')
-        LOG.info('Downloading to {0}'.format(tgt_path))
-
-        # Kick off download
         with open(tgt_path, 'wb') as tgt:
             rd.download(tgt, ws_dir, chunks=('A', 'X'), expect_size=8*8*2)
 
-        # We expect the size of the file to correspond to two chunks
-        expected_size = 2 * (8 * 8 * 2)
-        tgt_size = os.stat(tgt_path).st_size
-        LOG.info('Downloaded data size is {0}, expecting {1}'.format(tgt_size, expected_size))
-        self.assertEqual(tgt_size, expected_size)
-
-        # We expect the temporary workspace to be empty
-        ws_list = os.listdir(ws_dir)
-        LOG.info('Workspace directory contents: {0}'.format(ws_list))
-        self.assertEqual(len(ws_list), 0)
+        self.check_single_file_download(2, tgt_path, ws_dir)
 
     @responses.activate
     def test_download_all_chunks(self):
-        # Add mock data to responses
         self.responses_add_mocks()
+        ws_dir, tgt_path = self.prepare_single_file_download()
 
-        # Make downloader's temporary directory
-        ws_dir = os.path.join(self.tmp_dir, 'workspace')
-        LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
-        os.mkdir(ws_dir)
-
-        # Where to download to
-        tgt_path = os.path.join(self.tmp_dir, 'dataset')
-        LOG.info('Downloading to {0}'.format(tgt_path))
-
-        # Kick off download
         with open(tgt_path, 'wb') as tgt:
             rd.download(tgt, ws_dir, expect_size=8*8*2)
 
-        # We expect the size of the file to correspond to 24 chunks
-        expected_size = 24 * (8 * 8 * 2)
-        tgt_size = os.stat(tgt_path).st_size
-        LOG.info('Downloaded data size is {0}, expecting {1}'.format(tgt_size, expected_size))
-        self.assertEqual(tgt_size, expected_size)
+        self.check_single_file_download(24, tgt_path, ws_dir)
 
-        # We expect the temporary workspace to be empty
-        ws_list = os.listdir(ws_dir)
-        LOG.info('Workspace directory contents: {0}'.format(ws_list))
-        self.assertEqual(len(ws_list), 0)
+    def prepare_multiple_chunk_download(self):
+        """Create workspace and pathnames for a multi-chunk download.
 
-    def download_all_chunks_separately(self, prefix=None,
-            expect_prefix='15-', expect_suffix='.tif'):
+        """
         # Make downloader's temporary directory
         ws_dir = os.path.join(self.tmp_dir, 'workspace')
         LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
         os.mkdir(ws_dir)
 
-        # Where to download to
-        tgt_path = os.path.join(self.tmp_dir, 'dataset')
-        LOG.info('Downloading to {0}'.format(tgt_path))
-
-        # Make directory to download chunks to
+        # Make directory to store chunks
         chunk_dir = os.path.join(self.tmp_dir, 'chunks')
-        LOG.info('Making downloader temporary chunk directory at {0}'.format(chunk_dir))
+        LOG.info('Making chunk directory at {0}'.format(chunk_dir))
         os.mkdir(chunk_dir)
 
-        # Kick off download
-        rd.download(None, ws_dir, expect_size=8*8*2, chunk_directory=chunk_dir, chunk_prefix=prefix)
+        return ws_dir, chunk_dir
+
+    def check_multiple_chunk_download(self, n_chunks, ws_dir, chunk_dir,
+            expect_prefix, expect_suffix):
+        """Check a multi-chunk download."""
 
         # We expect the temporary workspace to be empty
         ws_list = os.listdir(ws_dir)
@@ -159,6 +152,16 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
             self.assertTrue(fn.endswith(expect_suffix))
             self.assertTrue(fn.startswith(expect_prefix))
 
+    def download_all_chunks_separately(self, prefix=None, expect_prefix='15-',
+            expect_suffix='.tif'):
+        ws_dir, chunk_dir = self.prepare_multiple_chunk_download()
+
+        # Kick off download
+        rd.download(None, ws_dir, expect_size=8*8*2,
+                chunk_directory=chunk_dir, chunk_prefix=prefix)
+
+        self.check_multiple_chunk_download(24, ws_dir, chunk_dir, expect_prefix, expect_suffix)
+
     @responses.activate
     def test_download_all_chunks_separately(self):
         self.responses_add_mocks()
@@ -167,6 +170,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
     @responses.activate
     def test_download_all_chunks_separately_with_prefix(self):
         self.responses_add_mocks()
+
         # Note that auto-named chunks have the extension '.tiff'
         self.download_all_chunks_separately(prefix='chunk-',
                 expect_prefix='chunk-', expect_suffix='.tiff')
