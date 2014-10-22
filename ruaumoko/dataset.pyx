@@ -43,6 +43,7 @@ cell_shape = (4, 6)
 
 cdef class Dataset:
     default_location = "/srv/ruaumoko-dataset"
+    default_res = (14401, 10801)
 
     cdef short[:, :, :, :] data
     cdef size_t block_rows
@@ -53,6 +54,7 @@ cdef class Dataset:
         prot = mmap.PROT_READ
         flags = mmap.MAP_SHARED
 
+        shape = cell_shape + expected_res[::-1]
         with open(filename) as f:
             m = mmap.mmap(f.fileno(), length=0, prot=prot, flags=flags)
             self.data = MagicMemoryView(m, shape, b'h')

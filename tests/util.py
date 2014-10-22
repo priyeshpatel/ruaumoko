@@ -17,7 +17,7 @@ class TemporaryDirectoryTestCase(TestCase):
         super(TemporaryDirectoryTestCase, self).setUp()
 
         # Create a temporary directory which we can scribble over
-        self.tmp_dir = mkdtemp()
+        self.tmp_dir = mkdtemp(prefix='ruaumoko.test.')
         LOG.info('Created temporary directory {0}'.format(self.tmp_dir))
 
     def tearDown(self):
@@ -40,3 +40,15 @@ def responses_add_dem_mocks(host='www.viewfinderpanoramas.org', path='DEM/TIF15'
         responses.add(responses.GET, file_url,
                 body=mock_zip.open(info).read(),
                 content_type='application/zip')
+
+class DownloadedDatasetTestCase(TemporaryDirectoryTestCase):
+    """A test case which also ensures that a downloaded dataset is available
+    before running each test. The dataset will be available at
+    self.dataset_path.
+
+    """
+    @responses.activate
+    def setUp(self):
+        super(DownloadedDatasetTestCase, self).setUp()
+        self.dataset_path = os.path.join(DATA_DIR, 'dem-dataset')
+
