@@ -210,7 +210,7 @@ def main():
             target_f = open(target, "wb")
             chunk_dir = None
 
-        with target_f:
+        def do_download():
             download(
                 target_f, temp_dir,
                 host = opts['--host'],
@@ -219,6 +219,12 @@ def main():
                 chunk_directory = chunk_dir,
                 expect_res = expect_res,
             )
+
+        if target_f is not None:
+            with target_f:
+                do_download()
+        else:
+            do_download()
 
     return 0 # Success
 

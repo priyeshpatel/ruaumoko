@@ -184,14 +184,27 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
         self.download_all_chunks_separately(prefix='chunk-',
                 expect_prefix='chunk-', expect_suffix='.tiff')
 
-    def new_argv_for_downloader(self):
-        """Return a sys.argv array suitable for use with the downloader."""
-        ws_dir, tgt_path = self.prepare_single_file_download()
-        return ['ruaumoko-download', '--expect-resolution', '8x8', tgt_path]
-
     @responses.activate
     def test_download_all_chunks_via_main(self):
         self.responses_add_mocks()
-        with patch('sys.argv', self.new_argv_for_downloader()):
+
+        ws_dir, tgt_path = self.prepare_single_file_download()
+        new_argv = ['ruaumoko-download', '--expect-resolution', '8x8', tgt_path]
+        with patch('sys.argv', new_argv):
             status = rd.main()
+
         self.assertEqual(status, 0)
+        self.check_single_file_download(24, tgt_path, ws_dir)
+
+    @responses.activate
+    def test_download_split_chunks_via_main(self):
+        self.responses_add_mocks()
+
+        ws_dir, chunk_dir = self.prepare_multiple_chunk_download()
+        new_argv = ['ruaumoko-download', '--expect-resolution', '8x8',
+                '--split-chunks', chunk_dir]
+        with patch('sys.argv', new_argv):
+            status = rd.main()
+
+        self.assertEqual(status, 0)
+        self.check_multiple_chunk_download(24, ws_dir, chunk_dir, '15-', '.tif')
