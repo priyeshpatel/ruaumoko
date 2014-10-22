@@ -1,0 +1,8 @@
+# Requirements for ruaumoko test suite
+
+# Running test suite
+nose
+coverage
+
+# Mocking
+responses
