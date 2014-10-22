@@ -1,9 +1,16 @@
 import logging
 from tempfile import mkdtemp
-from unittest import TestCase
+import os
 from shutil import rmtree
+from unittest import TestCase
+import zipfile
+
+import responses
+
+from ruaumoko._compat import urlunsplit
 
 LOG = logging.getLogger(__name__)
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'mock-data')
 
 class TemporaryDirectoryTestCase(TestCase):
     def setUp(self):
@@ -21,4 +28,15 @@ class TemporaryDirectoryTestCase(TestCase):
 
         super(TemporaryDirectoryTestCase, self).tearDown()
 
+def responses_add_dem_mocks(host='www.viewfinderpanoramas.org', path='DEM/TIF15'):
+    """Register mock HTTP responses for mock DEM data.
 
+    """
+    mock_zip = zipfile.ZipFile(os.path.join(DATA_DIR, 'dem-chunks.zip'))
+    url_root = urlunsplit(('http', host, path, '', ''))
+    for info in mock_zip.infolist():
+        file_url = url_root + '/' + info.filename
+        LOG.info('Adding mock response for ' + file_url)
+        responses.add(responses.GET, file_url,
+                body=mock_zip.open(info).read(),
+                content_type='application/zip')

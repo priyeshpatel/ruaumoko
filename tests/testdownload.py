@@ -22,7 +22,6 @@ Tests for the ruaumoko download code.
 import logging
 import os
 from unittest import TestCase
-import zipfile
 
 # NB: unittest.mock is part of the standard lib in later Pythons
 try:
@@ -33,29 +32,14 @@ except ImportError:
 import responses
 
 import ruaumoko.download as rd
-from ruaumoko._compat import urlunsplit
 
-from .util import TemporaryDirectoryTestCase
+from .util import TemporaryDirectoryTestCase, responses_add_dem_mocks
 
 LOG = logging.getLogger(__name__)
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'mock-data')
 
 class TestFullStackDownloader(TemporaryDirectoryTestCase):
     def __init__(self, *args, **kwargs):
         super(TestFullStackDownloader, self).__init__(*args, **kwargs)
-
-    def responses_add_mocks(self, host='www.viewfinderpanoramas.org', path='DEM/TIF15'):
-        """Register mock HTTP responses for mock DEM data.
-
-        """
-        mock_zip = zipfile.ZipFile(os.path.join(DATA_DIR, 'dem-chunks.zip'))
-        url_root = urlunsplit(('http', host, path, '', ''))
-        for info in mock_zip.infolist():
-            file_url = url_root + '/' + info.filename
-            LOG.info('Adding mock response for ' + file_url)
-            responses.add(responses.GET, file_url,
-                    body=mock_zip.open(info).read(),
-                    content_type='application/zip')
 
     def create_workspace_dir(self):
         """Create a temporary workspace directory for the downloader to work in."""
@@ -93,7 +77,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_download_two_chunks(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
         ws_dir, tgt_path = self.prepare_single_file_download()
 
         with open(tgt_path, 'wb') as tgt:
@@ -103,7 +87,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_download_all_chunks(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
         ws_dir, tgt_path = self.prepare_single_file_download()
 
         with open(tgt_path, 'wb') as tgt:
@@ -157,12 +141,12 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_download_all_chunks_separately(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
         self.download_all_chunks_separately()
 
     @responses.activate
     def test_download_all_chunks_separately_with_prefix(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
 
         # Note that auto-named chunks have the extension '.tiff'
         self.download_all_chunks_separately(prefix='chunk-',
@@ -170,7 +154,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_download_all_chunks_via_main(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
 
         ws_dir, tgt_path = self.prepare_single_file_download()
         new_argv = ['ruaumoko-download', '--expect-resolution', '8x8', tgt_path]
@@ -182,7 +166,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_download_split_chunks_via_main(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
 
         ws_dir, chunk_dir = self.prepare_multiple_chunk_download()
         new_argv = ['ruaumoko-download', '--expect-resolution', '8x8',
@@ -195,7 +179,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_bad_resolution_spec_non_numeric(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
         ws_dir, tgt_path = self.prepare_single_file_download()
         new_argv = ['ruaumoko-download', '--expect-resolution', 'WxZ', tgt_path]
         with patch('sys.argv', new_argv):
@@ -204,7 +188,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
     @responses.activate
     def test_bad_resolution_spec_too_many_items(self):
-        self.responses_add_mocks()
+        responses_add_dem_mocks()
         ws_dir, tgt_path = self.prepare_single_file_download()
         new_argv = ['ruaumoko-download', '--expect-resolution', '8x8x1', tgt_path]
         with patch('sys.argv', new_argv):
