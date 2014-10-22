@@ -21,9 +21,7 @@ Tests for the ruaumoko download code.
 """
 import logging
 import os
-from tempfile import mkdtemp
 from unittest import TestCase
-from shutil import rmtree
 import zipfile
 
 # NB: unittest.mock is part of the standard lib in later Pythons
@@ -37,24 +35,10 @@ import responses
 import ruaumoko.download as rd
 from ruaumoko._compat import urlunsplit
 
+from .util import TemporaryDirectoryTestCase
+
 LOG = logging.getLogger(__name__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'mock-data')
-
-class TemporaryDirectoryTestCase(TestCase):
-    def setUp(self):
-        super(TemporaryDirectoryTestCase, self).setUp()
-
-        # Create a temporary directory which we can scribble over
-        self.tmp_dir = mkdtemp()
-        LOG.info('Created temporary directory {0}'.format(self.tmp_dir))
-
-    def tearDown(self):
-        # Remove the directory which we created
-        LOG.info('Removing temporary directory {0}'.format(self.tmp_dir))
-        rmtree(self.tmp_dir)
-        self.tmp_dir = None
-
-        super(TemporaryDirectoryTestCase, self).tearDown()
 
 class TestFullStackDownloader(TemporaryDirectoryTestCase):
     def __init__(self, *args, **kwargs):
