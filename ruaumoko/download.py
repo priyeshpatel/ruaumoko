@@ -198,6 +198,11 @@ def main():
         LOG.error('Invalid resolution string: {0}'.format(expect_res_string))
         return 1 # Error
 
+    if len(expect_res) != 2:
+        LOG.error('Resolution string should have two items. String was: {0}'.format(
+            expect_res_string))
+        return 1 # Error
+
     with TemporaryDirectory() as temp_dir:
         if opts['--split-chunks']:
             # Save chunks

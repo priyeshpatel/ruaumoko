@@ -208,3 +208,21 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
         self.assertEqual(status, 0)
         self.check_multiple_chunk_download(24, ws_dir, chunk_dir, '15-', '.tif')
+
+    @responses.activate
+    def test_bad_resolution_spec_non_numeric(self):
+        self.responses_add_mocks()
+        ws_dir, tgt_path = self.prepare_single_file_download()
+        new_argv = ['ruaumoko-download', '--expect-resolution', 'WxZ', tgt_path]
+        with patch('sys.argv', new_argv):
+            status = rd.main()
+        self.assertEqual(status, 1)
+
+    @responses.activate
+    def test_bad_resolution_spec_too_many_items(self):
+        self.responses_add_mocks()
+        ws_dir, tgt_path = self.prepare_single_file_download()
+        new_argv = ['ruaumoko-download', '--expect-resolution', '8x8x1', tgt_path]
+        with patch('sys.argv', new_argv):
+            status = rd.main()
+        self.assertEqual(status, 1)
