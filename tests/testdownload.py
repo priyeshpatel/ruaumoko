@@ -26,6 +26,12 @@ from unittest import TestCase
 from shutil import rmtree
 import zipfile
 
+# NB: unittest.mock is part of the standard lib in later Pythons
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 import responses
 
 import ruaumoko.download as rd
@@ -67,14 +73,19 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
                     body=mock_zip.open(info).read(),
                     content_type='application/zip')
 
+    def create_workspace_dir(self):
+        """Create a temporary workspace directory for the downloader to work in."""
+        ws_dir = os.path.join(self.tmp_dir, 'workspace')
+        LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
+        os.mkdir(ws_dir)
+        return ws_dir
+
     def prepare_single_file_download(self):
         """Create workspace and pathnames for a single-dataset download.
 
         """
         # Make downloader's temporary directory
-        ws_dir = os.path.join(self.tmp_dir, 'workspace')
-        LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
-        os.mkdir(ws_dir)
+        ws_dir = self.create_workspace_dir()
 
         # Where to download to
         tgt_path = os.path.join(self.tmp_dir, 'dataset')
@@ -102,7 +113,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
         ws_dir, tgt_path = self.prepare_single_file_download()
 
         with open(tgt_path, 'wb') as tgt:
-            rd.download(tgt, ws_dir, chunks=('A', 'X'), expect_size=8*8*2)
+            rd.download(tgt, ws_dir, chunks=('A', 'X'), expect_res=(8,8))
 
         self.check_single_file_download(2, tgt_path, ws_dir)
 
@@ -112,7 +123,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
         ws_dir, tgt_path = self.prepare_single_file_download()
 
         with open(tgt_path, 'wb') as tgt:
-            rd.download(tgt, ws_dir, expect_size=8*8*2)
+            rd.download(tgt, ws_dir, expect_res=(8,8))
 
         self.check_single_file_download(24, tgt_path, ws_dir)
 
@@ -121,9 +132,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
 
         """
         # Make downloader's temporary directory
-        ws_dir = os.path.join(self.tmp_dir, 'workspace')
-        LOG.info('Making downloader temporary workspace directory at {0}'.format(ws_dir))
-        os.mkdir(ws_dir)
+        ws_dir = self.create_workspace_dir()
 
         # Make directory to store chunks
         chunk_dir = os.path.join(self.tmp_dir, 'chunks')
@@ -157,7 +166,7 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
         ws_dir, chunk_dir = self.prepare_multiple_chunk_download()
 
         # Kick off download
-        rd.download(None, ws_dir, expect_size=8*8*2,
+        rd.download(None, ws_dir, expect_res=(8,8),
                 chunk_directory=chunk_dir, chunk_prefix=prefix)
 
         self.check_multiple_chunk_download(24, ws_dir, chunk_dir, expect_prefix, expect_suffix)
@@ -174,3 +183,15 @@ class TestFullStackDownloader(TemporaryDirectoryTestCase):
         # Note that auto-named chunks have the extension '.tiff'
         self.download_all_chunks_separately(prefix='chunk-',
                 expect_prefix='chunk-', expect_suffix='.tiff')
+
+    def new_argv_for_downloader(self):
+        """Return a sys.argv array suitable for use with the downloader."""
+        ws_dir, tgt_path = self.prepare_single_file_download()
+        return ['ruaumoko-download', '--expect-resolution', '8x8', tgt_path]
+
+    @responses.activate
+    def test_download_all_chunks_via_main(self):
+        self.responses_add_mocks()
+        with patch('sys.argv', self.new_argv_for_downloader()):
+            status = rd.main()
+        self.assertEqual(status, 0)
