@@ -17,6 +17,8 @@ Options:
     <dataset>                   Ruaumoko dataset to load elevation from.
                                 [default: {def_ds_loc}]
 """
+from __future__ import print_function
+
 import logging
 import math
 import os
