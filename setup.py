@@ -48,6 +48,7 @@ console_scripts = [
     "ruaumoko-api = ruaumoko.api:main",
     "ruaumoko-get = ruaumoko.get_cmd:main",
     "ruaumoko-download = ruaumoko.download:main",
+    "ruaumoko-ascii-map = ruaumoko.asciiart:main",
 ]
 
 setup(
