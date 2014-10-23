@@ -86,13 +86,11 @@ TIFF_PATTERN = '15-<CHUNK>.tif'
 ZIP_PATTERN = '15-<CHUNK>.zip'
 DEM_PATH = 'DEM/TIF15'
 
-DEFAULT_RESOLUTION = (14401, 10801)
-
 # HACK: interpolate defaults into docopt string.
 __doc__ = __doc__.format(
     default_location = Dataset.default_location,
     default_host = DEFAULT_HOST,
-    default_res = DEFAULT_RESOLUTION,
+    default_res = Dataset.default_res,
 )
 
 def char_range(frm, to):
@@ -110,7 +108,7 @@ def expand_pattern(pattern, **kwargs):
 
 def download(target, temp_dir, host=DEFAULT_HOST, path=DEM_PATH,
         zip_pattern=ZIP_PATTERN, tiff_pattern=TIFF_PATTERN, chunks=None,
-        chunk_prefix=None, chunk_directory=None, expect_res=DEFAULT_RESOLUTION):
+        chunk_prefix=None, chunk_directory=None, expect_res=Dataset.default_res):
     tgt_path = os.path.join(temp_dir, "chunk")
 
     # Expected raw data size is 2-bytes (16-bits) per pixel
