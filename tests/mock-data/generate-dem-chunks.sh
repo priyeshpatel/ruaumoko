@@ -23,14 +23,16 @@
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
 
 # Defaults
-tile_size=8
+tile_width=20
+tile_height=10
 
 show_usage() {
     cat >&2 <<EOI
 Generate a downsampled set of DEM data from a directory containing DEM GeoTIFFs.
 
 Usage:
-    $0 [-h?] [-t SIZE] [--] <zip-output> <dem-directory>
+    $0 [-h?] [-w WIDTH] [-e HEIGHT] [--] <zip-output> <dataset-output>
+        <dem-directory>
 EOI
 }
 
@@ -41,9 +43,11 @@ show_full_usage() {
 Options:
     -h, -?              Show a brief usage summary.
 
-    -t SIZE             Resample DEMs to SIZE x SIZE tiles. [default: $tile_size]
+    -w WIDTH            Resample DEMs to WIDTH wide. [default: $tile_width]
+    -e HEIGHT           Resample DEMs to HEIGHT high. [default: $tile_height]
 
     <zip-output>        Zip file to write downsampled DEM tiles to.
+    <dataset-output>    File to write raw data to.
     <dem-directory>     Directory conaining DEM GeoTIFF tiles.
 
     Use "--" to separate positional options from switches.
@@ -56,8 +60,11 @@ while getopts "h?t:" opt; do
             show_full_usage
             exit 0
             ;;
-        t)
-            tile_size=${OPTARG}
+        w)
+            tile_width=${OPTARG}
+            ;;
+        e)
+            tile_height=${OPTARG}
             ;;
         *)
             echo "Unknown option: $opt" >&2
@@ -70,15 +77,16 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
-# Do we have exactly two options?
-if [ "$#" != 2 ]; then
+# Do we have the right number of positional options?
+if [ "$#" != 3 ]; then
     show_usage
     exit 1
 fi
 
 # Extract positional options.
 zip_file=$1
-dem_directory=$2
+dataset_file=$2
+dem_directory=$3
 
 # Create temporary directory which is deleted on script exit.
 tmp_dir=`mktemp -dt dem-chunk.XXXXXX`
@@ -87,12 +95,26 @@ cleanup_tmp() {
 }
 trap cleanup_tmp EXIT
 
+# Delete output file if it exists
+if [ -f "$dataset_file" ]; then
+    rm "$dataset_file"
+fi
+
 # Process DEM tiles.
 for tile_fn in "$dem_directory/"*; do
     echo "Processing ${tile_fn}..."
-    gdalwarp -r average -ts "$tile_size" "$tile_size" "$tile_fn" "$tmp_dir/`basename $tile_fn`"
-    zip -9 "$tmp_dir/`basename $tile_fn .tif`.zip" -j "$tmp_dir" "$tmp_dir/`basename $tile_fn`"
-    rm "$tmp_dir/`basename $tile_fn`"
+    tiff_output_fn="$tmp_dir/`basename $tile_fn`"
+    zip_output_fn="$tmp_dir/`basename $tile_fn .tif`.zip"
+    raw_output_fn="$tmp_dir/raw"
+    echo "    ... downsampling"
+    gdalwarp -r average -ts "$tile_width" "$tile_height" "$tile_fn" "$tiff_output_fn"
+    echo "    ... extracting"
+    convert -quiet "$tiff_output_fn" "GRAY:$raw_output_fn"
+    cat "$raw_output_fn" >>"$dataset_file"
+    echo "    ... compressing"
+    zip -9 "$zip_output_fn" -j "$tmp_dir" "$tmp_dir/`basename $tile_fn`"
+
+    rm "$tiff_output_fn" "$raw_output_fn"
 done
 
 # Compress (deleting file if it already exists)
