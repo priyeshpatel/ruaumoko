@@ -17,8 +17,6 @@ Options:
     <dataset>                   Ruaumoko dataset to load elevation from.
                                 [default: {def_ds_loc}]
 """
-from __future__ import print_function
-
 import logging
 import math
 import os
@@ -82,7 +80,10 @@ def main():
     # Format elevation image as ASCII art
     dots = ' .:-=+*#%@'
     for er in elev_img:
-        print(''.join(dots[max(0, min(len(dots)-1, int((len(dots)*e)/max_elev)))] for e in er))
+        sys.stdout.write(
+            ''.join(dots[max(0, min(len(dots)-1, int((len(dots)*e)/max_elev)))] for e in er)
+        )
+        sys.stdout.write('\n')
 
     return 0 # success
 
