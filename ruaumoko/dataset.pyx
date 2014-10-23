@@ -37,23 +37,19 @@ from magicmemoryview import MagicMemoryView
 
 from libc.math cimport round
 
-
 # In this module, everything is indexed [row][col] (or, [lat][lon]).
 
-cdef resolution = 240
-
-cdef size_t block_rows = 10800
-cdef size_t block_cols = 14400
-
-shape = (4, 6, 10801, 14401)
-
+cell_shape = (4, 6)
 
 cdef class Dataset:
-    cdef short[:, :, :, :] data
-
     default_location = "/srv/ruaumoko-dataset"
 
-    def __init__(self, filename=default_location):
+    cdef short[:, :, :, :] data
+    cdef size_t block_rows
+    cdef size_t block_cols
+    cdef double lng_resolution, lat_resolution
+
+    def __init__(self, filename=default_location, expected_res=default_res):
         prot = mmap.PROT_READ
         flags = mmap.MAP_SHARED
 
@@ -61,13 +57,20 @@ cdef class Dataset:
             m = mmap.mmap(f.fileno(), length=0, prot=prot, flags=flags)
             self.data = MagicMemoryView(m, shape, b'h')
 
+        self.block_rows = expected_res[1] - 1
+        self.block_cols = expected_res[0] - 1
+
+        # Tile resolution is computed assuming 60 degrees longitude and 45 degrees longitude
+        self.lng_resolution = self.block_cols / 60.0
+        self.lat_resolution = self.block_rows / 45.0
+
     cdef short get_cell(self, int row, int col):
         cdef int block_r, block_c
 
-        block_r = row / block_rows
-        row %= block_rows
-        block_c = col / block_cols
-        col %= block_cols
+        block_r = row // self.block_rows
+        row %= self.block_rows
+        block_c = col // self.block_cols
+        col %= self.block_cols
 
         return self.data[block_r, block_c, row, col]
 
@@ -84,7 +87,7 @@ cdef class Dataset:
 
         cdef int i, j
 
-        i = <int> round(i_f * resolution)
-        j = <int> round(j_f * resolution)
+        i = <int> round(i_f * self.lat_resolution)
+        j = <int> round(j_f * self.lng_resolution)
 
         return self.get_cell(i, j)
