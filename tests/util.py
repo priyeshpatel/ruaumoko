@@ -12,6 +12,10 @@ from ruaumoko._compat import urlunsplit
 LOG = logging.getLogger(__name__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'mock-data')
 
+# Path to the mock ruaumoko dataset and the tile-size within
+MOCK_DATASET_PATH = os.path.join(DATA_DIR, 'dem-dataset')
+MOCK_DATASET_TILE_SIZE = (20,10)
+
 class TemporaryDirectoryTestCase(TestCase):
     def setUp(self):
         super(TemporaryDirectoryTestCase, self).setUp()
@@ -40,15 +44,4 @@ def responses_add_dem_mocks(host='www.viewfinderpanoramas.org', path='DEM/TIF15'
         responses.add(responses.GET, file_url,
                 body=mock_zip.open(info).read(),
                 content_type='application/zip')
-
-class DownloadedDatasetTestCase(TemporaryDirectoryTestCase):
-    """A test case which also ensures that a downloaded dataset is available
-    before running each test. The dataset will be available at
-    self.dataset_path.
-
-    """
-    @responses.activate
-    def setUp(self):
-        super(DownloadedDatasetTestCase, self).setUp()
-        self.dataset_path = os.path.join(DATA_DIR, 'dem-dataset')
 
