@@ -44,17 +44,3 @@ def get_elevation(latitude, longitude):
         abort(400)
 
     return jsonify({"elevation": result})
-
-
-def main():
-    if sys.argv[1:] == ["--debug"]:
-        app.run(debug=True)
-    elif sys.argv[1:] == []:
-        app.run()
-    else:
-        print("Usage: {} [--debug]".format(sys.argv[0]), file=sys.stderr)
-        sys.exit(2)
-
-
-if __name__ == "__main__":
-    main()

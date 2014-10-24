@@ -45,7 +45,7 @@ def get_version():
     raise Exception("Could not find version number")
 
 console_scripts = [
-    "ruaumoko-api = ruaumoko.api:main",
+    "ruaumoko-api = ruaumoko.manager:main",
     "ruaumoko-get = ruaumoko.get_cmd:main",
     "ruaumoko-download = ruaumoko.download:main",
     "ruaumoko-ascii-map = ruaumoko.asciiart:main",
@@ -66,6 +66,7 @@ setup(
     install_requires=[
         # Web API
         "Flask",
+        "Flask-Script",
 
         # Command line processing
         "docopt",
