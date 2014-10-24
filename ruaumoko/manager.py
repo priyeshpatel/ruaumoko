@@ -1,4 +1,4 @@
-# Copyright 2014 (C) Priyesh Patel, Daniel Richman
+# Copyright 2014 (C) Rich Wareham <rich.cusf@richwareham.com>
 #
 # This file is part of Ruaumoko.
 # https://github.com/cuspaceflight/ruaumoko
@@ -15,32 +15,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ruaumoko. If not, see <http://www.gnu.org/licenses/>.
+#
+"""Command-line utility to run/manage webapp."""
+import os
 
-from __future__ import print_function
+from flask.ext.script import Manager
+from .api import app
 
-import sys
-from flask import Flask, abort, jsonify
+manager = Manager(app)
 
-from . import Dataset
-
-app = Flask(__name__)
-
-
-@app.before_first_request
-def open_dataset():
-    global elevation
-
-    dir = app.config.get('ELEVATION_DIRECTORY', Dataset.default_location)
-    elevation = Dataset(dir)
-
-
-@app.route('/<latitude>,<longitude>')
-def get_elevation(latitude, longitude):
-    try:
-        latitude = float(latitude)
-        longitude = float(longitude)
-        result = elevation.get(latitude, longitude)
-    except ValueError:
-        abort(400)
-
-    return jsonify({"elevation": result})
+def main():
+    if 'RUAUMOKO_SETTINGS' in os.environ:
+        app.config.from_envvar('RUAUMOKO_SETTINGS')
+    manager.run()

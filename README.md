@@ -24,6 +24,25 @@ the [GNU GPL 3](http://gplv3.fsf.org/) (see LICENSE).
 Python dependences may be found in `requirements.txt`. To run the downloader
 you will also require the `convert` command (from `imagemagick`).
 
+## Running a development webserver
+
+The ``ruaumoko-api`` command can be used to run a development web server.
+
+```console
+$ ruaumoko-api runserver
+```
+
+This will use the default configuration. To use a custom configuration to, for
+example, change the dataset location use the ``RUAUMOKO_SETTINGS`` environment
+variable:
+
+```console
+$ cat > ruaumoko-development.txt <<EOL
+ELEVATION_DIRECTORY = '/path/to/your/dataset'
+EOL
+$ RUAUMOKO_SETTINGS=ruaumoko-development.txt ruaumoko-api runserver
+```
+
 ## Dataset Format
 
 Throughout Ruaumoko, data is indexed latitude-first/row-first
