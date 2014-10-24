@@ -33,12 +33,13 @@ $ ruaumoko-api runserver
 ```
 
 This will use the default configuration. To use a custom configuration to, for
-example, change the dataset location use the ``RUAUMOKO_SETTINGS`` environment
-variable:
+example, change the dataset location and enable debugging use the
+``RUAUMOKO_SETTINGS`` environment variable:
 
 ```console
 $ cat > ruaumoko-development.txt <<EOL
 ELEVATION_DIRECTORY = '/path/to/your/dataset'
+DEBUG = True
 EOL
 $ RUAUMOKO_SETTINGS=ruaumoko-development.txt ruaumoko-api runserver
 ```
