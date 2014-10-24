@@ -1,5 +1,8 @@
 # Ruaumoko: Elevation API for Tawhiri
 
+[![Build Status](https://travis-ci.org/cuspaceflight/ruaumoko.svg?branch=master)](https://travis-ci.org/cuspaceflight/ruaumoko)
+[![Coverage Status](https://coveralls.io/repos/cuspaceflight/ruaumoko/badge.png?branch=master)](https://coveralls.io/r/cuspaceflight/ruaumoko?branch=master)
+
 A Python module and web API for worldwide elevation data.
 
 This project is a part of the larger [Tawhiri Landing Predictor
