@@ -31,7 +31,8 @@ def open_dataset():
     global elevation
 
     dir = app.config.get('ELEVATION_DIRECTORY', Dataset.default_location)
-    elevation = Dataset(dir)
+    res = app.config.get('ELEVATION_TILE_RESOLUTION', Dataset.default_res)
+    elevation = Dataset(dir, expected_res=res)
 
 
 @app.route('/<latitude>,<longitude>')
