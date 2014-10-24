@@ -6,3 +6,4 @@ coverage
 
 # Mocking
 responses
+Flask-Testing
